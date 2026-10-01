@@ -1,0 +1,33 @@
+# FPL Hog Statistician — two themes the user can switch between in the app's Settings menu
+# (top-right ⋮ → Settings → Theme). Light follows VS Code "Quiet Light", dark follows "Monokai".
+[theme]
+font = "sans serif"
+
+[theme.light]
+primaryColor = "#7A3E9D"
+backgroundColor = "#F5F5F5"
+secondaryBackgroundColor = "#E8E8EE"
+textColor = "#333333"
+linkColor = "#4B83CD"
+borderColor = "#D4D4D4"
+
+[theme.light.sidebar]
+backgroundColor = "#EDEDF5"
+secondaryBackgroundColor = "#E2E2EC"
+textColor = "#333333"
+
+[theme.dark]
+primaryColor = "#A6E22E"
+backgroundColor = "#272822"
+secondaryBackgroundColor = "#3E3D32"
+textColor = "#F8F8F2"
+linkColor = "#66D9EF"
+borderColor = "#49483E"
+
+[theme.dark.sidebar]
+backgroundColor = "#1E1F1C"
+secondaryBackgroundColor = "#3E3D32"
+textColor = "#F8F8F2"
+
+[client]
+toolbarMode = "minimal"
