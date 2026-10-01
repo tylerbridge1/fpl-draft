@@ -1,0 +1,40 @@
+{
+ "params": {
+  "window": 2,
+  "player_pull": 4.0,
+  "minutes_pull": 2.0,
+  "form_hl": 8,
+  "minutes_hl": 5,
+  "xg_weight": 1.0,
+  "team_pull": 0.5,
+  "team_long": 0.7,
+  "prior_strength": 0.5,
+  "mins_ml_w": 0.8,
+  "ctx_pow": 0.0,
+  "w_venue": 0.5,
+  "mom_cap": 0.1,
+  "psi": 0.0,
+  "sigma_disc": 0.3,
+  "k_reg": 300
+ },
+ "before": 6.5641062861256,
+ "after": 6.402205433977478,
+ "before_parts": {
+  "this season": 7.775733776446135,
+  "2025-26": 6.39563458725517
+ },
+ "after_parts": {
+  "this season": 7.52733454627517,
+  "2025-26": 6.245760970219705
+ },
+ "holdout_before": 6.1699810025043185,
+ "holdout_after": 6.038241053808018,
+ "when": "2026-09-30 17:58",
+ "mode": "thorough",
+ "minutes": 6.6,
+ "sets": [
+  "this season (3 GWs)",
+  "2025-26 (18 GWs)"
+ ],
+ "gws_scored": 21
+}
