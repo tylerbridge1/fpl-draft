@@ -23,53 +23,62 @@ logging.getLogger("streamlit.runtime.scriptrunner.script_runner").setLevel(loggi
 warnings.filterwarnings("ignore")
 
 st.set_page_config(page_title="FPL Hog Statistician", page_icon="🐷", layout="wide")
-try:
-    _DARK = str(st.context.theme.base or "light") == "dark"
-except Exception:
-    _DARK = False
-_PURPLE, _INK = "#37003C", ("#ECEAF2" if _DARK else "#1F1A2E")
-_SEC = ("transparent", "#ECEAF2", "#3A3F4D") if _DARK else ("#FFFFFF", "#37003C", "#D9D3E3")
+_PURPLE = "#37003C"
 st.markdown(f"""<style>
 footer {{visibility: hidden;}}
-.block-container {{ padding-top: 4.2rem; padding-bottom: 3rem; max-width: 1400px; }}
+.block-container {{ padding-top: 3.6rem; padding-bottom: 3rem; max-width: 1400px; }}
 h2 {{ font-size: 1.15rem !important; font-weight: 700 !important; }} h3 {{ font-size: 1rem !important; font-weight: 700 !important; }}
 [data-testid="stMetricValue"] {{ font-size: 1.3rem !important; font-weight: 700; }}
 [data-testid="stMetricLabel"] p {{ font-size: .75rem !important; opacity: .8; }}
 .stButton > button, [data-testid^="stBaseButton"] {{ border-radius: 999px !important; font-weight: 600 !important; }}
 .stButton > button[kind="primary"], [data-testid="stBaseButton-primary"] {{ background: linear-gradient(90deg,#04F5FF,#00FF87) !important;
    color: {_PURPLE} !important; border: none !important; }}
-.stButton > button[kind="secondary"], [data-testid="stBaseButton-secondary"] {{ background: {_SEC[0]} !important; color: {_SEC[1]} !important;
-   border: 1px solid {_SEC[2]} !important; }}
-.hog-hero {{ display: flex; align-items: center; gap: 10px; margin: 0 0 6px; }}
-.hog-title {{ font-size: 1.45rem; font-weight: 800; color: {_INK}; line-height: 1.1; letter-spacing: -.01em; }}
-.hog-sub {{ font-size: .8rem; opacity: .65; }}
-@media (max-width: 640px) {{ .block-container {{ padding: 3.8rem .75rem 3rem !important; }} .hog-title {{ font-size: 1.2rem; }}
-  .hog-sub {{ display: none; }} input, textarea, select {{ font-size: 16px !important; }} }}
+.stButton > button[kind="secondary"], [data-testid="stBaseButton-secondary"] {{ background: transparent !important; color: inherit !important;
+   border: 1px solid rgba(150,60,255,.55) !important; }}
+.stButton > button[kind="secondary"]:hover, [data-testid="stBaseButton-secondary"]:hover {{ border-color: #00FF87 !important; }}
+.hog-banner {{ display: flex; align-items: center; gap: 14px; padding: 12px 18px; margin: 0 0 12px; border-radius: 14px; color: #fff;
+   background: linear-gradient(100deg, #37003C 0%, #580f68 55%, #963CFF 100%); box-shadow: 0 4px 14px rgba(55,0,60,.25);
+   border-bottom: 4px solid transparent; border-image: linear-gradient(90deg,#04F5FF,#00FF87) 1; }}
+.hog-banner .hog-title {{ font-size: 1.45rem; font-weight: 800; color: #fff !important; line-height: 1.1; letter-spacing: -.01em; }}
+.hog-banner .hog-sub {{ font-size: .82rem; color: rgba(255,255,255,.82) !important; margin-top: 2px; }}
+.hog-banner .hog-chip {{ margin-left: auto; text-align: right; font-size: .78rem; color: rgba(255,255,255,.9); line-height: 1.35; }}
+.hog-banner .hog-chip b {{ color: #00FF87; font-size: .95rem; }}
+@media (max-width: 640px) {{ .block-container {{ padding: 3.4rem .7rem 3rem !important; }} .hog-banner .hog-title {{ font-size: 1.15rem; }}
+  .hog-banner .hog-chip {{ display: none; }} input, textarea, select {{ font-size: 16px !important; }} }}
 </style>""", unsafe_allow_html=True)
-st.markdown("<div class='hog-hero'><svg width='36' height='36' viewBox='0 0 64 64' aria-hidden='true'><circle cx='32' cy='35' r='22' fill='#F6A5C0'/>"
-            "<path d='M13 22 L11 7 L25 15 Z' fill='#EC8DB0'/><path d='M51 22 L53 7 L39 15 Z' fill='#EC8DB0'/><ellipse cx='32' cy='42' rx='10.5' ry='7.5' fill='#EC8DB0'/>"
-            "<circle cx='28.3' cy='42' r='2' fill='#9D3C63'/><circle cx='35.7' cy='42' r='2' fill='#9D3C63'/><circle cx='23.5' cy='30' r='2.6' fill='#37003C'/>"
-            "<circle cx='40.5' cy='30' r='2.6' fill='#37003C'/></svg><div><div class='hog-title'>FPL Hog Statistician</div>"
-            "<div class='hog-sub'>Expected points · win chances · best lineups</div></div></div>", unsafe_allow_html=True)
+PIG_SVG = ("<svg width='40' height='40' viewBox='0 0 64 64' aria-hidden='true'><circle cx='32' cy='35' r='22' fill='#F6A5C0'/>"
+           "<path d='M13 22 L11 7 L25 15 Z' fill='#EC8DB0'/><path d='M51 22 L53 7 L39 15 Z' fill='#EC8DB0'/><ellipse cx='32' cy='42' rx='10.5' ry='7.5' fill='#EC8DB0'/>"
+           "<circle cx='28.3' cy='42' r='2' fill='#9D3C63'/><circle cx='35.7' cy='42' r='2' fill='#9D3C63'/><circle cx='23.5' cy='30' r='2.6' fill='#37003C'/>"
+           "<circle cx='40.5' cy='30' r='2.6' fill='#37003C'/></svg>")
+_HERO = st.empty()
+
+
+def render_hero(sub="Expected points · win chances · best lineups", chip=""):
+    _HERO.markdown(f"<div class='hog-banner'>{PIG_SVG}<div><div class='hog-title'>FPL Hog Statistician</div><div class='hog-sub'>{sub}</div></div>"
+                   f"<div class='hog-chip'>{chip}</div></div>", unsafe_allow_html=True)
+
+
+render_hero()
 _st_caption = st.caption
 
 
 def _smart_caption(body="", *a, **k):
-    """Short notes show as small text; long explanations sit behind an ⓘ icon, like every control's tooltip."""
+    """Short notes show as small text. Long explanations are left out of the screens (they live in the Guide page and in every
+    control's ⓘ tooltip), so no empty note lines appear."""
     if len(str(body)) > 170 and not a and not k:
-        try:
-            return _st_caption("About this", help=str(body))
-        except TypeError:
-            return _st_caption(body)
+        return None
     return _st_caption(body, *a, **k)
 
 
 st.caption = _smart_caption
 # widgets on screens that aren't open keep their values (Streamlit forgets widgets that weren't drawn)
-_WB_PREFIX = ("stab_", "mf_", "rz_", "focus_pick", "recipe_team", "cols_mode", "rank_sub", "tr_", "news_", "cam_", "yt_key", "windy_key", "team_by", "more_pick")
+_WB_PREFIX = ("stab_", "mf_", "rz_", "focus_pick", "recipe_team", "cols_mode", "rank_sub", "bps_", "pt_", "green_", "sm_", "mu_", "ma_", "sf_", "calc_", "tr_", "news_", "cam_", "yt_key", "windy_key", "team_by", "more_pick")
+_WB_SKIP = ("calc_k_", "calc_c", "calc_best", "calc_sel", "pt_btn_", "pt_in_", "pt_swap_", "pt_sel", "pt_squad", "pt_xi", "pt_bench", "pt_pending", "pt_init", "pt_metric_last")
 _WB = st.session_state.setdefault("_wb", {})
+for _k in [k_ for k_ in list(_WB) if str(k_).startswith(_WB_SKIP)]:      # clear anything saved by older versions
+    _WB.pop(_k, None)
 for _k in list(st.session_state.keys()):
-    if isinstance(_k, str) and _k.startswith(_WB_PREFIX):
+    if isinstance(_k, str) and _k.startswith(_WB_PREFIX) and not _k.startswith(_WB_SKIP):
         _WB[_k] = st.session_state[_k]
 for _k, _v in list(_WB.items()):
     if _k not in st.session_state:
@@ -197,9 +206,20 @@ HELP = {
     # DPS
     "wpa_h": "How many upcoming gameweeks WPA looks at: each one against the opponent you actually face that week. Default 3.",
     "wpa_decay": "How much each later gameweek counts relative to the one before (0.85 = next week counts 85%). Default 0.85.",
-    "rank_by": "How the Rankings table is ordered. WPA (default) = how much claiming the player raises your chance of winning your next matchups, "
+    "rank_by": "How the Rankings table is ordered. Green score = the players whose rows are greenest: every key column adds how far he is "
+               "into the green half in seven areas (expected points, upside, minutes, attack, defence, bonus, value to your team), each counted once. "
+               "Haul points = expected points from big weeks (haul chance × typical haul size, in points). WPA (default) = how much claiming the player raises your chance of winning your next matchups, "
                "after dropping your least useful player at his position. It falls back to Pts added when there are no head-to-head fixtures, "
                "and to Theta Swole when no team is picked. Theta Swole, AER and DPS give the other orderings.",
+    "bps": "BPS profile: each player's bonus-points-system score per 90 from games of 30+ minutes, as an average, a floor (10th percentile) "
+           "and a ceiling (90th percentile), compared only with his own position. xBonus and P(3 bonus) simulate each fixture's bonus race.",
+    "zipf": "Zipf xVR (Zipf Expected-Value Rating): expected points from the top-20% 'haul' tail of a gameweek, where each elite performance "
+            "is weighted by its Zipf rank. Built from every past gameweek: players who played are ranked by points over what an ordinary player in their position "
+            "would score in the same minutes, the top 20% "
+            "(Pareto's vital few) earn credit = points ÷ rank^s × (1 + minutes fraction), with s fitted from the data. A model fitted on past "
+            "gameweeks turns xG, xA, threat, creativity, BPS, minutes, form and past elite rate into each player's chance of joining the top 20% "
+            "next gameweek. Shown as Haul points = that chance × the points he usually scores in a haul week (real FPL points). The Zipf-weighted "
+            "xVR index stays on the Accuracy page as research. Transfers in are added only if last season shows they predict it.",
     "risk_kappa": "Risk appetite for Theta Swole. 0 = neutral: rank on expected points. Above 0 rewards boom-or-bust players with a wide floor–ceiling "
                   "range (useful when you're the underdog in your matchup); below 0 rewards steady players (useful when you're protecting a lead). Default 0.",
     "dd_scale": "The formula part of DPS uses xG + xA + creativity + threat + influence, either summed (0–5) or averaged (0–1). Because DPS then "
@@ -310,7 +330,7 @@ HELP_GUIDE = [
     ("📈 Bookmaker priors", [("The Odds API key", "odds_key"), ("Bookmaker regions", "odds_regions"), ("Use bookmaker priors", "mkt_on"),
                             ("Market weight", "mkt_w"), ("Anytime-scorer margin to strip", "mkt_margin"),
                             ("Fetch odds for this gameweek", "fetch_odds")]),
-    ("⚡ DPS & Theta Swole", [("Rank players by", "rank_by"), ("Theta Swole: risk appetite", "risk_kappa"), ("Sum vs average of the five indices", "dd_scale")]),
+    ("⚡ DPS & Theta Swole", [("Haul points / Zipf research", "zipf"), ("BPS profile", "bps"), ("Rank players by", "rank_by"), ("Theta Swole: risk appetite", "risk_kappa")]),
     ("🔍 Filters", [("Team", "f_team"), ("Positions", "f_pos"), ("Minimum season minutes", "f_min"),
                    ("Include injured / suspended / out", "f_out"), ("Only unowned players", "f_wire"), ("Search player", "f_search")]),
     ("Main page", [("⚡ Solve FPL button", "solve_btn"), ("Focus overrides: player picker", "focus_pick"),
@@ -352,6 +372,7 @@ def load_core(league_id: int):
     teams = pd.DataFrame(boot["teams"])
     players["team_code"] = players["team"].map(dict(zip(teams["id"], teams["short_name"])))
     players["team_full_name"] = players["team"].map(dict(zip(teams["id"], teams["name"])))
+    players["team_shirt"] = players["team"].map(dict(zip(teams["id"], teams["code"]))) if "code" in teams.columns else np.nan
     players["position"] = players["element_type"].map({1: "GKP", 2: "DEF", 3: "MID", 4: "FWD"})
     for c_ in ("ep_next", "ep_this"):
         players[c_] = pd.to_numeric(players[c_], errors="coerce") if c_ in players.columns else np.nan
@@ -2733,6 +2754,387 @@ def score_table(wf, alpha, god=None):
 
 
 # =========================================================
+# ZIPF xVR — Zipf / Pareto expected-value rating
+# =========================================================
+ZIPF_TOP = 0.20            # Pareto split: the top 20% of players who played in a gameweek
+ZIPF_HL = 4.0              # half-life (gameweeks) for a player's elite history
+BPS_FEATS = ["z_bps_avg", "z_bps_floor", "z_bps_ceil", "bps_vol"]
+ZIPF_FEATS = ["xPts", "g90", "a90", "threat_6", "creativity_6", "bps_6", "mins_6", "start_6", "form", "dc90", "elite_rate",
+              "pos_gk", "pos_def", "pos_mid"] + BPS_FEATS
+
+
+@st.cache_data(show_spinner=False, max_entries=4)
+def zipf_table(h, exp_rows, baseline="position"):
+    """Every finished gameweek: all players who played, points over expectation, Zipf rank, the top-20% 'vital few', the Zipf exponent
+    fitted on them (log surplus vs log rank) and each elite player's credit = points / rank^s x (1 + minutes fraction).
+    `exp_rows` (id, GW, xPts) are the model's pre-gameweek forecasts; where missing, the expectation is the position's points per 90
+    in that gameweek x minutes played."""
+    d = h[h["minutes"] > 0][["id", "round", "element_type", "minutes", "total_points", "n_played"]].rename(columns={"round": "GW"}).copy()
+    if d.empty:
+        return pd.DataFrame(), pd.DataFrame()
+    # baseline "position" (default): points over what an ordinary player in the same position would score in the same minutes (Theta Swole's
+    # 'compare with the position' idea). baseline "forecast": points over the model's own pre-gameweek forecast for that player (rewards surprise).
+    if baseline == "forecast" and exp_rows is not None and len(exp_rows):
+        d = d.merge(exp_rows.rename(columns={"xPts": "exp"}).drop_duplicates(["id", "GW"]), on=["id", "GW"], how="left")
+    else:
+        d["exp"] = np.nan
+    grp = d.groupby(["GW", "element_type"])
+    p90 = grp["total_points"].transform("sum") / (grp["minutes"].transform("sum") / 90.0).replace(0, np.nan)
+    d["exp"] = d["exp"].fillna(p90 * d["minutes"] / 90.0)
+    d["surplus"] = d["total_points"] - d["exp"]
+    rows, law = [], []
+    for g, gd in d.groupby("GW"):
+        n = len(gd)
+        gd = gd.sort_values("surplus", ascending=False).assign(rank=np.arange(1, n + 1))
+        k = max(1, int(np.ceil(ZIPF_TOP * n)))
+        el = gd.head(k)
+        pos = el[el["surplus"] > 0]
+        s_, r2 = 1.0, np.nan
+        if len(pos) >= 8:
+            x, y = np.log(pos["rank"].to_numpy(float)), np.log(pos["surplus"].to_numpy(float))
+            b, a = np.polyfit(x, y, 1)
+            s_ = float(np.clip(-b, 0.2, 2.5))
+            r2 = float(np.corrcoef(x, y)[0, 1] ** 2)
+        mfrac = (gd["minutes"] / (90.0 * gd["n_played"].clip(lower=1))).clip(0, 1)
+        elite = gd["rank"] <= k
+        credit = np.where(elite, gd["total_points"].clip(lower=0) / gd["rank"].astype(float) ** s_ * (1 + mfrac), 0.0)
+        rows.append(gd.assign(N=n, elite=elite.astype(float), credit=credit, s=s_))
+        pts_pos = gd["total_points"].clip(lower=0)
+        law.append({"GW": int(g), "Players who played": n, "Top 20%": k, "Zipf exponent s": s_, "Log-log fit R²": r2,
+                    "Share of points scored by the top 20%": float(pts_pos[elite.to_numpy()].sum() / max(pts_pos.sum(), 1e-9))})
+    return pd.concat(rows, ignore_index=True), pd.DataFrame(law)
+
+
+def zipf_history(Z, hl=ZIPF_HL):
+    """For each player and gameweek, using only EARLIER gameweeks: decayed elite rate (shrunk toward the 20% base rate) and his average
+    credit when elite. Also the same numbers after the latest gameweek (key = last GW + 1) for live use."""
+    if Z.empty:
+        return pd.DataFrame(columns=["id", "GW", "elite_rate", "credit_mean", "n_elite"])
+    gws = sorted(Z["GW"].unique())
+    E = Z.pivot_table(index="id", columns="GW", values="elite", aggfunc="max")
+    C = Z.pivot_table(index="id", columns="GW", values="credit", aggfunc="sum").reindex_like(E)
+    P = E.notna()
+    E, C = E.fillna(0.0), C.fillna(0.0)
+    dec = 0.5 ** (1.0 / hl)
+    S = W = CS = NE = np.zeros(len(E))
+    out = []
+    for g in gws + [gws[-1] + 1]:
+        rate = (S + 0.2 * 1.0) / (W + 1.0)
+        cmean = np.where(NE > 0, CS / np.maximum(NE, 1e-9), np.nan)
+        out.append(pd.DataFrame({"id": E.index, "GW": g, "elite_rate": rate, "credit_mean": cmean, "n_elite": NE}))
+        if g in E.columns:
+            e_, c_, p_ = E[g].to_numpy(), C[g].to_numpy(), P[g].to_numpy().astype(float)
+            S, W = S * dec + e_ * p_, W * dec + p_
+            CS, NE = CS + c_, NE + e_
+    return pd.concat(out, ignore_index=True)
+
+
+THETA_FEATS = ["theta_rel", "dps_resid", "spread", "upside"]   # Theta Swole's ingredients, as the elite model sees them
+
+
+def _zipf_X(frame, bps=True, theta=False):
+    X = pd.DataFrame(index=frame.index)
+    feats_ = (ZIPF_FEATS if bps else [f_ for f_ in ZIPF_FEATS if f_ not in BPS_FEATS]) + (THETA_FEATS if theta else [])
+    for c_ in feats_:
+        if c_ == "pos_gk":
+            X[c_] = (frame["element_type"] == 1).astype(float)
+        elif c_ == "pos_def":
+            X[c_] = (frame["element_type"] == 2).astype(float)
+        elif c_ == "pos_mid":
+            X[c_] = (frame["element_type"] == 3).astype(float)
+        else:
+            X[c_] = pd.to_numeric(frame[c_], errors="coerce") if c_ in frame.columns else 0.0
+    return X.fillna(0.0)
+
+
+def logit_fit(X, y, l2=1.0, iters=60):
+    """L2-regularised logistic regression by Newton steps on standardised features. Returns (weights, standard errors, mean, sd)."""
+    X, y = np.asarray(X, float), np.asarray(y, float)
+    mu, sd = X.mean(0), X.std(0) + 1e-9
+    Z1 = np.column_stack([np.ones(len(X)), (X - mu) / sd])
+    w = np.zeros(Z1.shape[1])
+    pen = np.r_[0.0, np.full(Z1.shape[1] - 1, l2)]
+    for _ in range(iters):
+        p_ = 1 / (1 + np.exp(-np.clip(Z1 @ w, -30, 30)))
+        H = Z1.T @ (Z1 * (p_ * (1 - p_))[:, None]) + np.diag(pen)
+        step = np.linalg.solve(H, Z1.T @ (y - p_) - pen * w)
+        w += step
+        if np.abs(step).max() < 1e-7:
+            break
+    se = np.sqrt(np.clip(np.diag(np.linalg.inv(H)), 0, None))
+    return w, se, mu, sd
+
+
+def logit_predict(model, X):
+    w, _, mu, sd = model
+    z = np.column_stack([np.ones(len(X)), (np.asarray(X, float) - mu) / sd]) @ w
+    return 1 / (1 + np.exp(-np.clip(z, -30, 30)))
+
+
+def _wq(v, w, q):
+    """Weighted quantile (linear interpolation on the weighted CDF)."""
+    o = np.argsort(v)
+    v, w = np.asarray(v, float)[o], np.asarray(w, float)[o]
+    c = (np.cumsum(w) - 0.5 * w) / max(w.sum(), 1e-12)
+    return float(np.interp(q, c, v))
+
+
+@st.cache_data(show_spinner=False, max_entries=48)
+def bps_profile(h, cutoff, hl=6.0, k=3.0):
+    """Each player's BPS per 90 from games of 30+ minutes before `cutoff` (recent games weighted most): average, floor (10th percentile),
+    ceiling (90th percentile) and volatility, each shrunk toward his position's values by k pseudo-games, then expressed as z-scores and
+    percentiles WITHIN position (defenders and forwards collect BPS in different ways, so they are only compared with their own kind)."""
+    cols = ["element_type", "bps_avg", "bps_floor", "bps_ceil", "bps_vol", "bps_n", "z_bps_avg", "z_bps_floor", "z_bps_ceil",
+            "pct_bps_avg", "pct_bps_floor", "pct_bps_ceil"]
+    d = h[(h["round"] < cutoff) & (h["minutes"] >= 30)][["id", "element_type", "round", "minutes", "bps"]].copy()
+    if d.empty:
+        return pd.DataFrame(columns=cols)
+    d["b90"] = d["bps"] * 90.0 / d["minutes"].clip(lower=30)
+    d["w"] = 0.5 ** ((cutoff - 1 - d["round"]) / hl)
+    pri = {et: (float(np.average(g["b90"], weights=g["w"])), _wq(g["b90"], g["w"], 0.1), _wq(g["b90"], g["w"], 0.9))
+           for et, g in d.groupby("element_type")}
+    rows = []
+    for pid, g in d.groupby("id"):
+        et = int(g["element_type"].iloc[0])
+        n = float(len(g))
+        own = (float(np.average(g["b90"], weights=g["w"])), _wq(g["b90"], g["w"], 0.1), _wq(g["b90"], g["w"], 0.9))
+        sh = [(n * o_ + k * p_) / (n + k) for o_, p_ in zip(own, pri[et])]
+        rows.append({"id": pid, "element_type": et, "bps_avg": sh[0], "bps_floor": sh[1], "bps_ceil": sh[2], "bps_n": n})
+    out = pd.DataFrame(rows).set_index("id")
+    out["bps_vol"] = (out["bps_ceil"] - out["bps_floor"]) / out["bps_avg"].clip(lower=1.0)
+    for c_ in ("avg", "floor", "ceil"):
+        g_ = out.groupby("element_type")[f"bps_{c_}"]
+        out[f"z_bps_{c_}"] = ((out[f"bps_{c_}"] - g_.transform("mean")) / (g_.transform("std") + 1e-9)).clip(-3, 3)
+        out[f"pct_bps_{c_}"] = g_.rank(pct=True)
+    return out[cols]
+
+
+def bps_profiles_all(h, gws):
+    """bps_profile as it stood before each gameweek in `gws` (for leak-free training rows)."""
+    parts = [bps_profile(h, int(g)).assign(GW=int(g)).reset_index() for g in gws]
+    parts = [p_ for p_ in parts if len(p_)]
+    return pd.concat(parts, ignore_index=True) if parts else pd.DataFrame(columns=["id", "GW"] + BPS_FEATS)
+
+
+@st.cache_data(show_spinner=False, max_entries=4)
+def bonus_sim(slim, fixtures, n=4000, seed=0):
+    """Monte Carlo of the bonus race in every fixture: each player plays (start / sub / not) with his playing-time probabilities, scores a
+    BPS drawn from his own floor-average-ceiling profile (a two-piece normal: floor and ceiling are its 10th and 90th percentiles), scaled
+    by how good this fixture is for him; the top three BPS in the match get 3, 2 and 1 bonus points. Returns expected bonus,
+    P(3 bonus) and P(any bonus) per player."""
+    rng = np.random.default_rng(seed)
+    out = pd.DataFrame({"xBonus": 0.0, "P3": 0.0, "Pany": 0.0}, index=slim.index)
+    for _, f in fixtures.iterrows():
+        sub = slim[slim["team"].isin([f["team_h"], f["team_a"]]) & ((slim["start_p"] + slim["sub_p"]) > 0.03)]
+        if len(sub) < 3:
+            continue
+        m = len(sub)
+        u, z = rng.random((n, m)), rng.standard_normal((n, m))
+        stp, sbp = sub["start_p"].to_numpy(float), sub["sub_p"].to_numpy(float)
+        med = sub["bps_avg"].to_numpy(float)
+        up = np.clip(sub["bps_ceil"].to_numpy(float) - med, 1.0, None) / 1.2816
+        dn = np.clip(med - sub["bps_floor"].to_numpy(float), 1.0, None) / 1.2816
+        b = (med + np.where(z > 0, z * up, z * dn)) * sub["scale"].to_numpy(float)
+        b = np.where(u < stp, b, np.where(u < stp + sbp, b * 0.3, -1e9))
+        order = np.argsort(-b, axis=1)
+        bonus = np.zeros((n, m))
+        r_ = np.arange(n)
+        for k_, pts_ in ((0, 3.0), (1, 2.0), (2, 1.0)):
+            ix = order[:, k_]
+            ok = b[r_, ix] > -1e8
+            bonus[r_[ok], ix[ok]] = pts_
+        out.loc[sub.index, "xBonus"] += bonus.mean(0)
+        out.loc[sub.index, "P3"] = 1 - (1 - out.loc[sub.index, "P3"]) * (1 - (bonus == 3).mean(0))
+        out.loc[sub.index, "Pany"] = 1 - (1 - out.loc[sub.index, "Pany"]) * (1 - (bonus > 0).mean(0))
+    return out
+
+
+def _credit_fit_raw(rows, lam=5.0):
+    el = rows[rows["elite"] > 0]
+    if len(el) < 40:
+        return None
+    X = _zipf_X(el).to_numpy()
+    y = np.log1p(el["credit"].clip(lower=0).to_numpy(float))
+    mu, sd = X.mean(0), X.std(0) + 1e-9
+    Zs = (X - mu) / sd
+    b = float(y.mean())
+    w = np.linalg.solve(Zs.T @ Zs + lam * np.eye(Zs.shape[1]), Zs.T @ (y - b))
+    s2 = float(np.var(y - (b + Zs @ w)))
+    return w, b, mu, sd, s2
+
+
+@st.cache_data(show_spinner=False, max_entries=4)
+def credit_fit(rows):
+    """How big a player's top-20% week tends to be (his Zipf credit), from the same pre-gameweek signals incl. BPS ceiling, fitted on
+    past elite weeks (ridge regression on log credit)."""
+    return _credit_fit_raw(rows)
+
+
+def credit_predict(m, X):
+    w, b, mu, sd, s2 = m
+    return np.clip(np.expm1(b + ((np.asarray(X, float) - mu) / sd) @ w + s2 / 2), 0, None)
+
+
+def zipf_training_rows(train, Z, hist_tab, h=None):
+    """Pre-gameweek feature rows (the model's own forecasts and recent stats) labelled with whether the player made that gameweek's top 20%."""
+    if train is None or train.empty or Z.empty:
+        return pd.DataFrame()
+    t = train[train["GW"] >= 1].copy() if "season" not in train.columns else train[train["season"] == "this season"].copy()
+    t = t.merge(Z[["id", "GW", "elite", "credit", "total_points"]], on=["id", "GW"], how="left")
+    t["elite"] = t["elite"].fillna(0.0)
+    t = t.merge(hist_tab[["id", "GW", "elite_rate", "credit_mean", "n_elite"]], on=["id", "GW"], how="left")
+    t["elite_rate"] = t["elite_rate"].fillna(0.2)
+    if h is not None and len(t):
+        bp = bps_profiles_all(h, tuple(sorted(int(g_) for g_ in t["GW"].unique())))
+        if len(bp):
+            t = t.merge(bp[["id", "GW"] + BPS_FEATS], on=["id", "GW"], how="left")
+    return t
+
+
+@st.cache_data(show_spinner=False, max_entries=4)
+def zipf_model(rows, theta=False, bps=True):
+    """Chance of making the top 20% from pre-gameweek signals (BPS profile and Theta Swole's ingredients optional)."""
+    if rows is None or len(rows) < 300 or rows["elite"].sum() < 30:
+        return None
+    return logit_fit(_zipf_X(rows, bps=bps, theta=theta).to_numpy(), rows["elite"].to_numpy())
+
+
+def _auc(score, y):
+    """Probability that a random top-20% player is scored above a random other player (0.5 = guessing)."""
+    y = np.asarray(y, float)
+    ra = pd.Series(np.asarray(score, float)).rank().to_numpy()
+    npos, nneg = y.sum(), len(y) - y.sum()
+    return float((ra[y == 1].sum() - npos * (npos + 1) / 2) / max(npos * nneg, 1)) if npos and nneg else np.nan
+
+
+@st.cache_data(show_spinner=False, max_entries=4)
+def add_theta_feats(rows, wf, alpha, conviction, mode, n_teams):
+    """Theta Swole's ingredients for every past player-gameweek, using only what was known before it:
+    theta_rel = forecast minus the replacement level at his position that gameweek (Theta's 'points above replacement');
+    dps_resid = the part of the DPS formula that AER doesn't contain (Theta's DPS signal, before its weight beta);
+    spread = Ceiling - Floor and upside = Ceiling - AER (Theta's risk-appetite term), from out-of-sample calibrated intervals."""
+    r = rows.copy()
+    if r.empty:
+        return r
+    r["theta_rel"] = 0.0
+    for (g_, et_), grp in r.groupby(["GW", "element_type"]):
+        v_ = grp["xPts"].sort_values(ascending=False)
+        repl_ = float(v_.iloc[min(n_teams * THETA_SLOTS.get(int(et_), 2), len(v_) - 1)])
+        r.loc[grp.index, "theta_rel"] = grp["xPts"] - repl_
+    if wf is not None and len(wf):
+        w = wf.assign(aer=god_expanding(wf, alpha, conviction))
+        lo, hi = calibrated_interval(w, w["aer"])
+        w = w.assign(spread=(hi - lo).to_numpy(), upside=(hi - w["aer"]).to_numpy())
+        r = r.merge(w[["id", "GW", "spread", "upside"]].drop_duplicates(["id", "GW"]), on=["id", "GW"], how="left")
+        hist_ = dps_history(wf, alpha, conviction, mode)
+        if hist_:
+            dr_ = pd.concat(hist_, ignore_index=True)[["id", "GW", "resid"]].rename(columns={"resid": "dps_resid"})
+            r = r.merge(dr_.drop_duplicates(["id", "GW"]), on=["id", "GW"], how="left")
+    for c_ in ("spread", "upside", "dps_resid"):
+        if c_ not in r.columns:
+            r[c_] = np.nan
+    for c_ in ("spread", "upside"):
+        r[c_] = r[c_].fillna(r.groupby(["GW", "element_type"])[c_].transform("median")).fillna(r[c_].median()).fillna(0.0)
+    r["dps_resid"] = r["dps_resid"].fillna(0.0)
+    return r
+
+
+@st.cache_data(show_spinner=False, max_entries=2)
+def zipf_transfer_check(season, p_key):
+    """Does FPL's 'transfers in' for a gameweek predict making that gameweek's top 20%, beyond the other signals? Tested on a past
+    season (the only place the API history includes gameweek transfer counts). Returns (coefficient per standard deviation, z-score, rows)."""
+    try:
+        ctx_p, pl_p, _ = past_context(season)
+        tr_p = past_training(season, p_key)
+        gw_raw, _, _ = load_past_raw(season)
+    except Exception:
+        return 0.0, 0.0, 0
+    if tr_p is None or tr_p.empty or "transfers_in" not in gw_raw.columns:
+        return 0.0, 0.0, 0
+    Zp, _ = zipf_table(ctx_p["h"], tr_p[["id", "GW", "xPts"]], "position")
+    rows = zipf_training_rows(tr_p.assign(season="this season"), Zp, zipf_history(Zp), ctx_p["h"])
+    tin = gw_raw.rename(columns={"element": "id", "round": "GW"})[["id", "GW", "transfers_in"]]
+    tin = tin.assign(transfers_in=pd.to_numeric(tin["transfers_in"], errors="coerce")).groupby(["id", "GW"], as_index=False)["transfers_in"].max()
+    rows = rows.merge(tin, on=["id", "GW"], how="left")
+    lt = np.log1p(rows["transfers_in"].fillna(0).clip(lower=0))
+    rows["z_tr"] = (lt - lt.groupby(rows["GW"]).transform("mean")) / (lt.groupby(rows["GW"]).transform("std") + 1e-9)
+    if len(rows) < 500 or rows["elite"].sum() < 50:
+        return 0.0, 0.0, len(rows)
+    X = np.column_stack([_zipf_X(rows).to_numpy(), rows["z_tr"].to_numpy()])
+    w, se, _, sd = logit_fit(X, rows["elite"].to_numpy())
+    coef = float(w[-1] / sd[-1])                 # per 1 sd of the (already standardised) transfers signal
+    return coef, float(w[-1] / max(se[-1], 1e-9)), int(len(rows))
+
+
+@st.cache_data(ttl=3600, show_spinner=False)
+def load_deadlines():
+    """Gameweek deadlines from the main FPL game (the Draft lineup deadline follows the same schedule)."""
+    try:
+        ev = make_session().get(f"{FPL}/bootstrap-static/", timeout=15).json()["events"]
+        return {int(e["id"]): e.get("deadline_time") for e in ev}
+    except Exception:
+        return {}
+
+
+@st.cache_data(ttl=900, show_spinner=False)
+def load_transfers_in():
+    """FPL's live 'transfers in this gameweek' (main game, updates until the deadline), keyed by the player's permanent code."""
+    try:
+        el = pd.DataFrame(make_session().get(f"{FPL}/bootstrap-static/", timeout=15).json()["elements"])
+        return el.set_index("code")["transfers_in_event"].astype(float)
+    except Exception:
+        return pd.Series(dtype=float)
+
+
+@st.cache_data(show_spinner=False, max_entries=4)
+@st.cache_data(show_spinner=False, max_entries=4)
+def zipf_backtest(rows):
+    """Walk-forward check: each gameweek, fit on earlier gameweeks only, then score how well xVR picked that gameweek's top 20%."""
+    out = []
+    if rows is None or rows.empty:
+        return pd.DataFrame()
+    cpos = rows[rows["elite"] > 0].groupby("element_type")["credit"].mean()
+    for g in sorted(rows["GW"].unique()):
+        tr, te = rows[rows["GW"] < g], rows[rows["GW"] == g]
+        if tr["GW"].nunique() < 2 or len(tr) < 300 or tr["elite"].sum() < 30 or te["elite"].sum() < 3:
+            continue
+        m_ = logit_fit(_zipf_X(tr).to_numpy(), tr["elite"].to_numpy())
+        p_ = logit_predict(m_, _zipf_X(te).to_numpy())
+        m0_ = logit_fit(_zipf_X(tr, bps=False).to_numpy(), tr["elite"].to_numpy())
+        p0_ = logit_predict(m0_, _zipf_X(te, bps=False).to_numpy())
+        has_t = all(c_ in rows.columns for c_ in THETA_FEATS)
+        if has_t:
+            mt_ = logit_fit(_zipf_X(tr, theta=True).to_numpy(), tr["elite"].to_numpy())
+            pt_ = logit_predict(mt_, _zipf_X(te, theta=True).to_numpy())
+        cf_ = _credit_fit_raw(tr)
+        prior_ = te["element_type"].map(cpos).fillna(cpos.mean()).to_numpy(float)
+        cmod_ = credit_predict(cf_, _zipf_X(te).to_numpy()) if cf_ is not None else prior_
+        ne_ = te["n_elite"].fillna(0).to_numpy(float) if "n_elite" in te.columns else np.zeros(len(te))
+        cm = np.expm1((np.log1p(te["credit_mean"].fillna(0).clip(lower=0).to_numpy(float)) * ne_ + 3.0 * np.log1p(np.clip(cmod_, 0, None))) / (ne_ + 3.0))
+        xvr = p_ * cm
+        y = te["elite"].to_numpy()
+        ra = pd.Series(p_).rank().to_numpy()
+        npos, nneg = y.sum(), len(y) - y.sum()
+        auc = float((ra[y == 1].sum() - npos * (npos + 1) / 2) / max(npos * nneg, 1))
+        ra0 = pd.Series(p0_).rank().to_numpy()
+        auc0 = float((ra0[y == 1].sum() - npos * (npos + 1) / 2) / max(npos * nneg, 1))
+        pts = te["total_points"].fillna(0).to_numpy()
+        top = lambda v: float(pts[np.argsort(-np.asarray(v))[:20]].mean())
+        haul_ = pts >= np.quantile(pts[pts > 0], 0.8) if (pts > 0).sum() >= 10 else pts > 0       # top 20% by raw points among those who scored
+        hauls = lambda v: float(haul_[np.argsort(-np.asarray(v))[:20]].mean())
+        row_ = {"GW": int(g), "Hauls among xVR top 20": hauls(xvr), "AUC (picking the top 20%)": auc, "AUC without BPS profile": auc0, "Top-20 pts by Zipf xVR": top(xvr),
+                "Top-20 pts by AER": top(te["xPts"].to_numpy()), "Rank corr xVR vs points": rank_corr(pd.Series(xvr), pd.Series(pts))}
+        if has_t:
+            th_ = te["theta_rel"].to_numpy(float)
+            row_.update({"AUC with Theta Swole inputs": _auc(pt_, y), "AUC of Theta Swole alone": _auc(th_, y),
+                         "Top-20 pts by converged xVR": top(pt_ * cm), "Top-20 pts by Theta Swole": top(th_),
+                         "Rank corr Theta Swole vs xVR": rank_corr(pd.Series(th_), pd.Series(xvr))})
+        out.append(row_)
+    return pd.DataFrame(out)
+
+
+
+# =========================================================
 # SIDEBAR + LOAD
 # =========================================================
 _rerun = getattr(st, "rerun", None) or st.experimental_rerun
@@ -2897,11 +3299,13 @@ with st.sidebar.expander(":material/percent: Bookmaker odds", expanded=False):
     st.session_state.setdefault("dd_scale5", "Sum of the five 0–1 indices (as specified)")
 with st.sidebar.expander(":material/sort: Ranking options", expanded=False):
     st.caption("DPS and Theta Swole are calculated for every player. The DPS selected team sits above the Rankings table.")
-    if st.session_state.get("rank_by") not in ("WPA", "Theta Swole", "AER", "DPS"):
+    if st.session_state.get("rank_by") == "Zipf xVR":
+        st.session_state["rank_by"] = "Haul points"
+    if st.session_state.get("rank_by") not in ("WPA", "Green score", "Haul points", "Theta Swole", "AER", "DPS"):
         st.session_state["rank_by"] = "WPA"
-    rank_by = st.radio("Rank players by", ["WPA", "Theta Swole", "AER", "DPS"], key="rank_by", help=HELP["rank_by"])
+    rank_by = st.radio("Rank players by", ["WPA", "Green score", "Haul points", "Theta Swole", "AER", "DPS"], key="rank_by", help=HELP["rank_by"])
     risk_kappa = _slider("Theta Swole: risk appetite", "s_risk_kappa", -0.3, 0.3, 0.0, 0.05, help=HELP["risk_kappa"])
-    dd_scale = st.radio("xG + xA + Creativity + Threat + Influence", ["Sum of the five 0–1 indices (as specified)",
+    dd_scale = "Sum" if True else st.radio("xG + xA + Creativity + Threat + Influence", ["Sum of the five 0–1 indices (as specified)",
                                                                            "Average of the five (keeps DPS on a smaller scale)"],
                                 key="dd_scale5", help=HELP["dd_scale"])
     dd_mode = "sum" if str(dd_scale).startswith("Sum") else "avg"
@@ -2981,6 +3385,20 @@ with st.sidebar.expander(":material/history: Tune on history", expanded=False):
                            f"{_saved_tune.get('after', float('nan')):.3f} over {', '.join(_saved_tune.get('sets', [])) or 'history'}.")
     seasons = tuple(sorted({s_.strip() for s_ in str(past_txt).split(",") if re.fullmatch(r"\d{4}-\d{2}", s_.strip())}, reverse=True))
 
+try:
+    _dl = pd.Timestamp(load_deadlines().get(int(selected_gw))) if load_deadlines().get(int(selected_gw)) else None
+    _tn = ""
+    if my_entry_sel is not None and len(_ents_side):
+        _tn = str(_ents_side.loc[_ents_side["id"].astype(int) == int(my_entry_sel), "entry_name"].iloc[0])
+    _chip = ""
+    if _dl is not None:
+        _left = (_dl - pd.Timestamp.now(tz="UTC")).total_seconds()
+        _when = _dl.tz_convert("Europe/London").strftime("%a %d %b %H:%M")
+        _chip = (f"GW{selected_gw} deadline<br><b>{int(_left // 86400)}d {int(_left % 86400 // 3600)}h {int(_left % 3600 // 60)}m</b><br>{_when} UK"
+                 if _left > 0 else f"GW{selected_gw}<br><b>deadline passed</b><br>{_when} UK")
+    render_hero((_html.escape(_tn) + " · " if _tn else "") + f"Gameweek {selected_gw} · expected points, win chances, best lineups", _chip)
+except Exception:
+    pass
 if not started:
     st.warning("No finished gameweeks yet — forecasts use position priors and fixtures only.")
 ctx = build_context(hist, players, fx)
@@ -3058,21 +3476,26 @@ if gb1.button(":material/savings: Solve FPL", help=HELP["solve_btn"], type="prim
         st.session_state["tune_request"] = "quick"   # no saved tune yet: run a quick one on the next pass
     st.session_state["god_pending"] = pend_
     _rerun()
-PAGES = {"My Team": ":material/stadium:", "Rankings": ":material/leaderboard:", "Players": ":material/monitoring:",
-         "News": ":material/newspaper:", "Ask AI": ":material/smart_toy:", "More": ":material/more_horiz:"}
-MORE = {"Accuracy": ":material/fact_check:", "Matchups": ":material/compare_arrows:", "Live cams": ":material/videocam:", "Guide": ":material/menu_book:"}
+PAGES = {"My Team": ":material/stadium:", "Pick Team": ":material/swap_horiz:", "Rankings": ":material/person_search:",
+         "League": ":material/emoji_events:", "Players": ":material/monitoring:", "News": ":material/newspaper:", "Ask AI": ":material/smart_toy:",
+         "More": ":material/more_horiz:"}
+PAGE_NAMES = {"Rankings": "Transfers", "Players": "Stats"}       # labels as in the FPL app; internal names unchanged
+MORE = {"Points calculator": ":material/calculate:", "Signal finder": ":material/query_stats:", "Match analyzer": ":material/analytics:", "Accuracy": ":material/fact_check:", "Matchups": ":material/sports_soccer:", "Live cams": ":material/videocam:", "Guide": ":material/menu_book:"}
 
 
-def _seg(label, options, key, icons):
+def _seg(label, options, key, icons, names=None):
+    names = names or {}
     st.session_state.setdefault(key, options[0])
+    if st.session_state.get(key) not in options:
+        st.session_state[key] = options[0]
     try:
-        v_ = st.segmented_control(label, options, key=key, format_func=lambda o: f"{icons[o]} {o}", label_visibility="collapsed")
+        v_ = st.segmented_control(label, options, key=key, format_func=lambda o: f"{icons[o]} {names.get(o, o)}", label_visibility="collapsed")
     except Exception:
-        v_ = st.radio(label, options, key=key, format_func=lambda o: f"{icons[o]} {o}", horizontal=True, label_visibility="collapsed")
+        v_ = st.radio(label, options, key=key, format_func=lambda o: f"{icons[o]} {names.get(o, o)}", horizontal=True, label_visibility="collapsed")
     return v_ or options[0]
 
 
-page = _seg("Screen", list(PAGES), "page_pick", PAGES)
+page = _seg("Screen", list(PAGES), "page_pick", PAGES, PAGE_NAMES)
 if page == "More":
     page = _seg("More", list(MORE), "more_pick", MORE)
 
@@ -3395,52 +3818,112 @@ def team_projection(xi, bench, col="AER1"):
     return base, sub, float(np.sqrt(((spread / 2.56) ** 2).sum()))
 
 
+# club kits: (main colour, second colour, pattern) — drawn as a fallback under FPL's official shirt image
+CLUB_KIT = {"ARS": ("#EF0107", "#FFFFFF", "sleeves"), "AVL": ("#670E36", "#95BFE5", "sleeves"), "BOU": ("#DA291C", "#111111", "stripes"),
+            "BRE": ("#E30613", "#FFFFFF", "stripes"), "BHA": ("#0057B8", "#FFFFFF", "stripes"), "BUR": ("#6C1D45", "#99D6EA", "sleeves"),
+            "CHE": ("#034694", "#034694", "solid"), "CRY": ("#1B458F", "#C4122E", "stripes"), "EVE": ("#003399", "#003399", "solid"),
+            "FUL": ("#FFFFFF", "#111111", "solid"), "LEE": ("#FFFFFF", "#1D428A", "solid"), "LIV": ("#C8102E", "#C8102E", "solid"),
+            "MCI": ("#6CABDD", "#6CABDD", "solid"), "MUN": ("#DA291C", "#DA291C", "solid"), "NEW": ("#111111", "#FFFFFF", "stripes"),
+            "NFO": ("#DD0000", "#DD0000", "solid"), "SUN": ("#EB172B", "#FFFFFF", "stripes"), "TOT": ("#FFFFFF", "#132257", "solid"),
+            "WHU": ("#7A263A", "#1BB1E7", "sleeves"), "WOL": ("#FDB913", "#231F20", "solid"), "LEI": ("#003090", "#003090", "solid"),
+            "IPS": ("#3A64A3", "#3A64A3", "solid"), "SOU": ("#D71920", "#FFFFFF", "stripes"), "SHU": ("#EE2737", "#FFFFFF", "stripes"),
+            "LUT": ("#F78F1E", "#002D62", "solid"), "COV": ("#59CBE8", "#59CBE8", "solid"), "MID": ("#E11B22", "#E11B22", "solid"),
+            "NOR": ("#FFF200", "#00A650", "sleeves"), "WBA": ("#122F67", "#FFFFFF", "stripes"), "WAT": ("#FBEE23", "#ED2127", "solid"),
+            "HUL": ("#F5A12D", "#111111", "stripes"), "STK": ("#E03A3E", "#FFFFFF", "stripes"), "BIR": ("#0000FF", "#0000FF", "solid"),
+            "WRE": ("#D71920", "#D71920", "solid")}
+_SHIRT_PATH = "M30 12 L42 7 Q50 14 58 7 L70 12 L92 26 L83 42 L73 37 L73 93 L27 93 L27 37 L17 42 L8 26 Z"
+
+
+def jersey_svg(team_code, gk=False):
+    main, second, style = ("#2ECC71", "#145A32", "solid") if gk else CLUB_KIT.get(str(team_code), ("#B8B8C8", "#B8B8C8", "solid"))
+    pid = f"k{team_code}{'g' if gk else ''}"
+    defs, fill = "", main
+    if style == "stripes":
+        defs = (f"<defs><pattern id='{pid}' width='16' height='100' patternUnits='userSpaceOnUse'><rect width='16' height='100' fill='{main}'/>"
+                f"<rect x='8' width='8' height='100' fill='{second}'/></pattern></defs>")
+        fill = f"url(#{pid})"
+    sleeves = (f"<path d='M8 26 L30 12 L32 30 L17 42 Z M92 26 L70 12 L68 30 L83 42 Z' fill='{second}'/>" if style == "sleeves" else "")
+    return (f"<svg viewBox='0 0 100 100' class='pc-kit' aria-hidden='true'>{defs}<path d='{_SHIRT_PATH}' fill='{fill}' stroke='rgba(0,0,0,.35)' "
+            f"stroke-width='2' stroke-linejoin='round'/>{sleeves}<path d='M42 7 Q50 16 58 7' fill='none' stroke='rgba(0,0,0,.35)' stroke-width='2'/></svg>")
+
+
+def shirt_html(r):
+    """FPL's official shirt image layered over a drawn kit in club colours (the drawing shows if the image can't load)."""
+    gk = int(r.get("element_type", 0) or 0) == 1
+    code_ = r.get("team_shirt")
+    img_ = (f"<img src='https://fantasy.premierleague.com/dist/img/shirts/standard/shirt_{int(code_)}{'_1' if gk else ''}-110.webp' alt='' loading='lazy'>"
+            if pd.notna(code_) else "")
+    return f"<div class='pc-shirt'>{jersey_svg(r.get('team_code', ''), gk)}{img_}</div>"
+
+
 _PITCH_CSS = """<style>
-.fpl-wrap{max-width:620px;margin:0 auto 6px;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif}
-.fpl-pitch{position:relative;overflow:hidden;border-radius:14px;padding:16px 6px 18px;
- background:radial-gradient(ellipse at 50% 50%,rgba(255,255,255,.07),rgba(0,0,0,.18) 85%),
-            repeating-linear-gradient(180deg,#3a9a4f 0 7.14%,#348f48 7.14% 14.28%);
+.fpl-wrap{max-width:660px;margin:0 auto 6px;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif}
+.fpl-pitch{position:relative;overflow:hidden;border-radius:14px;padding:14px 6px 16px;
+ background:radial-gradient(ellipse at 50% 50%,rgba(255,255,255,.07),rgba(0,0,0,.18) 85%),repeating-linear-gradient(180deg,#3a9a4f 0 7.14%,#348f48 7.14% 14.28%);
  box-shadow:inset 0 0 0 3px rgba(255,255,255,.75),0 8px 22px rgba(0,0,0,.22)}
-.fpl-mk{position:absolute;border:2px solid rgba(255,255,255,.62);pointer-events:none}
+.fpl-mk{position:absolute;border:2px solid rgba(255,255,255,.55);pointer-events:none}
 .fpl-mk.half{left:0;right:0;top:50%;height:0;border-width:2px 0 0}
 .fpl-mk.circle{left:50%;top:50%;width:30%;aspect-ratio:1;transform:translate(-50%,-50%);border-radius:50%}
-.fpl-mk.spot{left:50%;top:50%;width:6px;height:6px;transform:translate(-50%,-50%);border-radius:50%;background:rgba(255,255,255,.75);border:0}
-.fpl-mk.box-t{left:21%;right:21%;top:-2px;height:15%;border-top:0}.fpl-mk.six-t{left:37%;right:37%;top:-2px;height:6%;border-top:0}
-.fpl-mk.arc-t{left:41%;right:41%;top:calc(15% - 2px);height:4%;border-top:0;border-radius:0 0 50% 50%/0 0 100% 100%}
-.fpl-mk.box-b{left:21%;right:21%;bottom:-2px;height:15%;border-bottom:0}.fpl-mk.six-b{left:37%;right:37%;bottom:-2px;height:6%;border-bottom:0}
-.fpl-mk.arc-b{left:41%;right:41%;bottom:calc(15% - 2px);height:4%;border-bottom:0;border-radius:50% 50% 0 0/100% 100% 0 0}
-.fpl-row{position:relative;z-index:1;display:flex;justify-content:center;gap:clamp(4px,1.5vw,12px);margin:14px 0;flex-wrap:nowrap}
-.fpl-card{width:clamp(58px,17vw,98px);border-radius:7px;overflow:hidden;text-align:center;box-shadow:0 3px 8px rgba(0,0,0,.3)}
-.fpl-name{background:#37003C;color:#fff;font-weight:700;font-size:clamp(9.5px,2.6vw,12px);padding:4px 3px 3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.fpl-pts{font-size:clamp(14px,4vw,19px);font-weight:800;line-height:1.25;padding:1px 0}
-.fpl-opp{font-size:clamp(8.5px,2.3vw,10px);background:rgba(255,255,255,.92);color:#37003C;font-weight:600;padding:2px 2px 3px;
- white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.fpl-flag{background:#FFBF00;color:#37003C;font-size:9px;font-weight:800;padding:1px 0}
-.fpl-flag.out{background:#E90052;color:#fff}
+.fpl-mk.box-t{left:21%;right:21%;top:-2px;height:14%;border-top:0}.fpl-mk.box-b{left:21%;right:21%;bottom:-2px;height:14%;border-bottom:0}
+.fpl-row{position:relative;z-index:1;display:flex;justify-content:center;gap:clamp(4px,1.4vw,12px);margin:10px 0;flex-wrap:nowrap}
+.pc{width:clamp(62px,16vw,104px);text-align:center;position:relative}
+.pc-shirt{position:relative;width:62%;margin:0 auto -6px;aspect-ratio:1}
+.pc-shirt .pc-kit{position:absolute;inset:8%;width:84%;height:84%;filter:drop-shadow(0 3px 3px rgba(0,0,0,.3))}
+.pc-shirt img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;filter:drop-shadow(0 3px 3px rgba(0,0,0,.3))}
+.pc-name{position:relative;background:#fff;color:#37003C;font-weight:800;font-size:clamp(9.5px,2.5vw,12px);padding:3px 3px 2px;border-radius:6px 6px 0 0;
+ white-space:nowrap;overflow:hidden;text-overflow:ellipsis;box-shadow:0 2px 6px rgba(0,0,0,.25)}
+.pc-opp{background:#ecebf3;color:#37003C;font-weight:700;font-size:clamp(8.5px,2.2vw,10.5px);padding:2px 2px 3px;white-space:nowrap;overflow:hidden}
+.pc-stat{display:flex;border-radius:0 0 6px 6px;overflow:hidden;box-shadow:0 2px 6px rgba(0,0,0,.25)}
+.pc-stat div{flex:1;padding:3px 0 4px;font-size:clamp(8.5px,2.2vw,10.5px);font-weight:800;line-height:1.2}
+.pc-stat small{display:block;font-size:.72em;font-weight:600;opacity:.85;line-height:1.1;margin-top:1px}
+.pc{margin-bottom:2px}
+.pc-flag{position:absolute;top:0;right:4%;z-index:2;background:#FFBF00;color:#37003C;font-size:9px;font-weight:800;border-radius:8px;padding:0 5px;line-height:15px}
+.pc-flag.out{background:#E90052;color:#fff}
 .fpl-bench{margin-top:10px;border-radius:14px;padding:8px 6px 10px;background:linear-gradient(180deg,#e9f7ef,#d6efe0)}
 .fpl-bench-title{color:#37003C;font-weight:800;font-size:11px;text-transform:uppercase;letter-spacing:.06em;text-align:center}
 .fpl-slot{color:#37003C;font-size:10px;font-weight:800;text-align:center;margin-bottom:2px;opacity:.75}
-.fpl-legend{font-size:11px;opacity:.7;margin:6px 4px 0;text-align:center}
+.fpl-legend{font-size:11px;opacity:.75;margin:6px 4px 0;text-align:center}
+/* big player card (like the FPL app's player profile) */
+.bpc{border-radius:18px;overflow:hidden;background:#fff;color:#37003C;box-shadow:0 6px 18px rgba(0,0,0,.18);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;max-width:420px}
+.bpc-top{position:relative;padding:12px 12px 0;background:linear-gradient(135deg,#04F5FF 0%,#00FF87 45%,#963CFF 100%);display:flex;align-items:flex-end;gap:10px;min-height:120px}
+.bpc-top .pc-shirt{width:110px;margin:0}
+.bpc-tags{display:flex;flex-direction:column;gap:4px;margin-left:auto;padding-bottom:10px}
+.bpc-tag{background:#37003C;color:#fff;border-radius:6px;padding:2px 8px;text-align:center;font-size:10px;line-height:1.2}
+.bpc-tag b{display:block;font-size:13px}
+.bpc-name{text-align:center;font-weight:900;font-size:20px;padding:8px 6px 2px}
+.bpc-sub{text-align:center;font-size:12px;opacity:.8;padding-bottom:8px}
+.bpc-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:2px;background:#fff;padding:0 2px 2px}
+.bpc-cell{background:#ecebf3;text-align:center;padding:5px 2px;font-size:10.5px;line-height:1.25}
+.bpc-cell b{display:block;font-size:15px}
+.bpc-dark .bpc-cell{background:#37003C;color:#fff}
+.bpc-unit{font-size:9px;opacity:.75}
 </style>"""
+FDR_BG = {1: "#00FF87", 2: "#7CE3A6", 3: "#E7E7E7", 4: "#FF5A79", 5: "#80072D"}
+FDR_FG = {1: "#37003C", 2: "#37003C", 3: "#37003C", 4: "#ffffff", 5: "#ffffff"}
+
+
+def _flag_html(r):
+    stt = str(r.get("status", "a"))
+    if stt not in ("d", "i", "s", "u"):
+        return ""
+    ch = r.get("chance_of_playing_next_round", np.nan)
+    return f"<div class='pc-flag{'' if stt == 'd' else ' out'}'>{(str(int(ch)) + '%') if pd.notna(ch) else ('?' if stt == 'd' else 'out')}</div>"
 
 
 def _card(r, col="AER1", show_dps=False):
+    """Pitch card: shirt, name, fixture, then expected points (pts) and haul chance (%). Points colour: red low -> green high, faded = less sure."""
     pts = float(r[col]) if pd.notna(r.get(col, np.nan)) else 0.0
-    x = (pts - 1.0) / 6.0                                        # absolute points scale: ~1 pt red, ~4 amber, 7+ dark green
+    x = (pts - 1.0) / 6.0
     cf = float(r.get("Confidence", 0.5)) if pd.notna(r.get("Confidence", np.nan)) else 0.5
     rgb = _mix(_interp(_VALUE_STOPS, x), 0.25 + 0.75 * cf)
-    lum = (0.299 * rgb[0] + 0.587 * rgb[1] + 0.114 * rgb[2]) / 255.0
-    fg = "#111" if lum > 0.6 else "white"
-    flag = ""
-    stt = str(r.get("status", "a"))
-    if stt in ("d", "i", "s", "u"):
-        ch = r.get("chance_of_playing_next_round", np.nan)
-        flag = (f"<div class='fpl-flag{'' if stt == 'd' else ' out'}'>"
-                f"{(str(int(ch)) + '% chance') if pd.notna(ch) else ('doubtful' if stt == 'd' else 'out')}</div>")
-    dps_ = f" · DPS {float(r['DPS']):.1f}" if (show_dps and pd.notna(r.get("DPS", np.nan))) else ""
-    return (f"<div class='fpl-card'><div class='fpl-name'>{_html.escape(str(r.get('web_name', '?')))}</div>{flag}"
-            f"<div class='fpl-pts' style='background:{_rgb(rgb)};color:{fg}'>{pts:.1f}</div>"
-            f"<div class='fpl-opp'>{_html.escape(str(r.get('Opponent', '') or ''))}{dps_}</div></div>")
+    fg = "#111" if (0.299 * rgb[0] + 0.587 * rgb[1] + 0.114 * rgb[2]) / 255.0 > 0.6 else "white"
+    ep = r.get("EliteP", np.nan)
+    second = (f"<div style='background:#37003C;color:#fff'>{float(r['DPS']):.1f}<small>DPS</small></div>" if show_dps and pd.notna(r.get("DPS", np.nan))
+              else f"<div style='background:#37003C;color:#fff'>{(f'{float(ep) * 100:.0f}%' if pd.notna(ep) else '–')}<small>haul</small></div>")
+    unit = "pts" if col == "AER1" else ""
+    return (f"<div class='pc'>{_flag_html(r)}{shirt_html(r)}<div class='pc-name'>{_html.escape(str(r.get('web_name', '?')))}</div>"
+            f"<div class='pc-opp'>{_html.escape(str(r.get('Opponent', '') or ''))}</div>"
+            f"<div class='pc-stat'><div style='background:{_rgb(rgb)};color:{fg}'>{pts:.1f}<small>{unit or col}</small></div>{second}</div></div>")
 
 
 def pitch_html(xi, bench, col="AER1", show_dps=False):
@@ -3456,11 +3939,451 @@ def pitch_html(xi, bench, col="AER1", show_dps=False):
             n_ += 1
             labels.append(str(n_))
     bench_cards = "".join(f"<div><div class='fpl-slot'>{lab}</div>{_card(r, col, show_dps)}</div>" for lab, (_, r) in zip(labels, bench.iterrows()))
-    marks = "".join(f"<div class='fpl-mk {c_}'></div>" for c_ in ("half", "circle", "spot", "box-t", "six-t", "arc-t", "box-b", "six-b", "arc-b"))
+    marks = "".join(f"<div class='fpl-mk {c_}'></div>" for c_ in ("half", "circle", "box-t", "box-b"))
     return (_PITCH_CSS + "<div class='fpl-wrap'><div class='fpl-pitch'>" + marks + "".join(rows) + "</div>"
             + "<div class='fpl-bench'><div class='fpl-bench-title'>Substitutes</div><div class='fpl-row'>" + bench_cards + "</div></div>"
-            + "<div class='fpl-legend'>Projected points · red low → green high · faded = less certain</div></div>")
+            + "<div class='fpl-legend'>Left number = expected points this gameweek (pts). Right = chance of a haul (a top-20% week for his position).</div></div>")
 
+
+def big_card_html(pid, fd, h, fx_all, gw, code_map):
+    """Full player card: shirt, position and ownership tags, last three gameweeks, next three fixtures (coloured by difficulty), season stats,
+    and this gameweek's forecast with units."""
+    r = fd.loc[pid]
+    tid = int(r["team"])
+    hp = h[(h["id"] == pid) & (h["round"] < gw)].sort_values("round").tail(3)
+    last = []
+    for _, g_ in hp.iterrows():
+        o_ = code_map.get(int(g_["hm_opp"]), "") if pd.notna(g_.get("hm_opp")) else "DGW"
+        v_ = "H" if g_.get("venue") == 1 else ("A" if g_.get("venue") == 0 else "")
+        last.append(f"<div class='bpc-cell'>GW{int(g_['round'])} · {o_}{f'({v_})' if v_ else ''}<b>{int(g_['total_points'])}<span class='bpc-unit'> pts</span></b></div>")
+    while len(last) < 3:
+        last.insert(0, "<div class='bpc-cell'>–<b>–</b></div>")
+    nxt = []
+    for g2 in range(gw, gw + 3):
+        f_ = fx_all[(fx_all["event"] == g2) & ((fx_all["team_h"] == tid) | (fx_all["team_a"] == tid))]
+        if f_.empty:
+            nxt.append(f"<div class='bpc-cell'>GW{g2}<b>blank</b></div>")
+            continue
+        f0 = f_.iloc[0]
+        home_ = int(f0["team_h"]) == tid
+        opp_ = code_map.get(int(f0["team_a"] if home_ else f0["team_h"]), "?")
+        d_ = int(f0.get("team_h_difficulty" if home_ else "team_a_difficulty", 3) or 3)
+        nxt.append(f"<div class='bpc-cell' style='background:{FDR_BG.get(d_, '#E7E7E7')};color:{FDR_FG.get(d_, '#37003C')}'>GW{g2}<b>{opp_}({'H' if home_ else 'A'})</b></div>")
+    hs = h[(h["id"] == pid) & (h["round"] < gw)]
+    season = [("FPL points", f"{int(hs['total_points'].sum())}", ""), ("Goals", f"{int(hs['goals_scored'].sum())}", ""),
+              ("Assists", f"{int(hs['assists'].sum())}", ""), ("Minutes", f"{int(hs['minutes'].sum())}", ""),
+              ("Season xG", f"{hs['expected_goals'].sum():.2f}", ""), ("Season xA", f"{hs['expected_assists'].sum():.2f}", "")]
+    start_ = min(float(r.get("p60_used", np.nan)), float(r.get("appear", 1.0))) if pd.notna(r.get("p60_used", np.nan)) else np.nan
+    ep_ = r.get("EliteP", np.nan)
+    model = [(f"AER GW{gw}", f"{float(r['AER1']):.1f}", "pts"), ("xG this GW", f"{float(r.get('xG', 0)):.2f}", "goals"),
+             ("xA this GW", f"{float(r.get('xA', 0)):.2f}", "assists"),
+             ("Starts (60+ min)", f"{start_ * 100:.0f}" if pd.notna(start_) else "–", "%"),
+             ("Haul chance", f"{float(ep_) * 100:.0f}" if pd.notna(ep_) else "–", "%"),
+             ("Points if he hauls", f"{float(r['HaulSize']):.1f}" if pd.notna(r.get("HaulSize", np.nan)) else "–", "pts")
+]
+    cell = lambda t_: f"<div class='bpc-cell'>{t_[0]}<b>{t_[1]}<span class='bpc-unit'> {t_[2]}</span></b></div>"
+    own_ = r.get("selected_by_percent", np.nan)
+    tags = (f"<div class='bpc-tag'>Position<b>{r.get('position', '')}</b></div><div class='bpc-tag'>Team<b>{r.get('team_code', '')}</b></div>"
+            + (f"<div class='bpc-tag'>Selected by<b>{float(own_):.1f}%</b></div>" if pd.notna(pd.to_numeric(own_, errors='coerce')) else ""))
+    return (_PITCH_CSS + f"<div class='bpc'><div class='bpc-top'>{shirt_html(r)}<div class='bpc-tags'>{tags}</div></div>"
+            f"<div class='bpc-name'>{_html.escape(str(r.get('first_name', ''))[:1] + '. ' if r.get('first_name') else '')}{_html.escape(str(r.get('web_name', '')))}</div>"
+            f"<div class='bpc-sub'>{_html.escape(str(r.get('team_full_name', '')))} · {_html.escape(str(r.get('Opponent', '') or ''))} · {r.get('Status', '')}</div>"
+            f"<div class='bpc-grid'>{''.join(last)}{''.join(nxt)}</div>"
+            f"<div class='bpc-grid bpc-dark'>{''.join(cell(t_) for t_ in season)}</div>"
+            f"<div class='bpc-grid'>{''.join(cell(t_) for t_ in model)}</div></div>")
+
+
+# =========================================================
+# MATCH PREDICTIONS — score probabilities from the same team model AER uses (plus bookmaker odds when fetched)
+# =========================================================
+DC_RHO = -0.08      # Dixon-Coles low-score correction: real matches end 0-0 / 1-1 a little more often than independent Poisson says
+
+
+def score_matrix(lh, la, kmax=10, rho=DC_RHO):
+    """P(home scores i, away scores j): independent Poisson goals (Maher 1982) with the Dixon & Coles (1997) correction for 0-0, 1-0, 0-1, 1-1."""
+    k = np.arange(kmax + 1)
+    fact = np.array([factorial(int(x)) for x in k], float)
+    ph, pa = np.exp(-lh) * lh ** k / fact, np.exp(-la) * la ** k / fact
+    M = np.outer(ph, pa)
+    M[0, 0] *= max(1 - lh * la * rho, 0)
+    M[0, 1] *= max(1 + lh * rho, 0)
+    M[1, 0] *= max(1 + la * rho, 0)
+    M[1, 1] *= max(1 - rho, 0)
+    return M / M.sum()
+
+
+def fit_poisson_ratings(long, cutoff, xw, hl=12.0, ridge=3.0):
+    """Every team's attack and defence rated at once from all matches before `cutoff`, adjusting for who each team played: a Poisson
+    regression  log(goals) = base + home advantage + own attack + opponent's leakiness  (Maher 1982; Dixon & Coles 1997), with older
+    matches fading (half-life `hl` gameweeks) and ridge shrinkage toward average (`ridge`). Goals are blended with expected goals (weight xw).
+    Returns (base, home, attack[21], leak[21]) or None if there are too few matches."""
+    d = long[long["round"] < cutoff].dropna(subset=["gf", "opp"])
+    if d["fid"].nunique() < 15:
+        return None
+    y = np.where(d["xg"].notna(), xw * d["xg"].fillna(0) + (1 - xw) * d["gf"], d["gf"]).astype(float)
+    t, o = d["team"].to_numpy(int), d["opp"].to_numpy(int)
+    n = len(d)
+    X = np.zeros((n, 42))
+    X[:, 0] = 1.0
+    X[:, 1] = d["home"].to_numpy(float)
+    X[np.arange(n), 1 + t] = 1.0            # attack of the scoring team (columns 2-21)
+    X[np.arange(n), 21 + o] = 1.0           # leakiness of the conceding team (columns 22-41)
+    w = 0.5 ** ((cutoff - 1 - d["round"].to_numpy(float)) / hl)
+    R = np.diag([0.0, 0.0] + [ridge] * 40)
+    th = np.zeros(42)
+    th[0] = np.log(max(float(np.average(y, weights=w)), 0.2))
+    for _ in range(40):
+        lam = np.exp(np.clip(X @ th, -5, 3))
+        step = np.linalg.solve(X.T @ (X * (w * lam)[:, None]) + R, X.T @ (w * (y - lam)) - R @ th)
+        th += step
+        if np.abs(step).max() < 1e-7:
+            break
+    att, leak = np.zeros(21), np.zeros(21)
+    att[1:21], leak[1:21] = th[2:22], th[22:42]
+    return float(th[0]), float(th[1]), att, leak
+
+
+def _ratings_lambdas(rt, h, a):
+    base, home, att, leak = rt
+    return float(np.exp(base + home + att[h] + leak[a])), float(np.exp(base + att[a] + leak[h]))
+
+
+@st.cache_data(show_spinner=False, max_entries=4)
+def best_rating_settings(long, fin, xw):
+    """How fast old matches should fade, how hard to pull toward average and how much to trust expected goals over goals, chosen by how
+    well each setting predicted this season's finished matches from earlier ones (log loss of the actual result)."""
+    best, scores = (12.0, 3.0, xw), {}
+    gws = [g for g in sorted(int(x) for x in fin["event"].unique()) if g >= 4]
+    for xw_ in sorted({0.0, 0.5, float(xw)}):
+        for hl in (6.0, 12.0, 30.0):
+            for ridge in (1.0, 3.0, 8.0):
+                ll, n = 0.0, 0
+                for g in gws:
+                    rt = fit_poisson_ratings(long, g, xw_, hl, ridge)
+                    if rt is None:
+                        continue
+                    for _, f in fin[fin["event"] == g].iterrows():
+                        M = score_matrix(*_ratings_lambdas(rt, int(f["team_h"]), int(f["team_a"])))
+                        hs, as_ = int(f["team_h_score"]), int(f["team_a_score"])
+                        pr = np.tril(M, -1).sum() if hs > as_ else (np.trace(M) if hs == as_ else np.triu(M, 1).sum())
+                        ll -= np.log(max(pr, 1e-6))
+                        n += 1
+                if n:
+                    scores[(hl, ridge, xw_)] = ll / n
+    if scores:
+        best = min(scores, key=scores.get)
+    return best
+
+
+def _predicted_score(M):
+    """The likeliest scoreline within the likeliest result (as a pundit would call it), plus the single likeliest exact score."""
+    res = [np.tril(M, -1).sum(), np.trace(M), np.triu(M, 1).sum()]
+    which = int(np.argmax(res))
+    cells = [(M[i, j], i, j) for i in range(6) for j in range(6)
+             if (which == 0 and i > j) or (which == 1 and i == j) or (which == 2 and i < j)]
+    q, i, j = max(cells)
+    top = max((M[x, y], x, y) for x in range(6) for y in range(6))
+    return f"{i}–{j}", float(q), f"{top[1]}–{top[2]}", float(top[0])
+
+
+def player_shares(h, players, cutoff, n_rounds=6):
+    """Each player's share of his team's recent attacking output (expected goal involvements) and, for defenders and keepers, his share
+    of the team's defender + keeper minutes, from the `n_rounds` gameweeks before `cutoff`."""
+    att = attack_share(h, players, cutoff, n_rounds)
+    hh = h[(h["round"] < cutoff) & (h["round"] >= cutoff - n_rounds) & (h["element_type"] <= 2)]
+    mins = hh.groupby("id")["minutes"].sum()
+    team_ = players.set_index("id")["team"]
+    tot = mins.groupby(team_.reindex(mins.index).to_numpy()).transform("sum")
+    dfs = (mins / tot.replace(0, np.nan)).reindex(att.index).fillna(0.0)
+    return pd.DataFrame({"att": att, "def": dfs})
+
+
+def team_absence(weights, shares, players):
+    """{team: (attacking share missing, defensive share missing)} from {player id: weight} (1 = definitely out, 0.5 = 50/50)."""
+    out = {}
+    tm = players.set_index("id")["team"]
+    for pid_, w_ in (weights or {}).items():
+        if pid_ in shares.index and pid_ in tm.index and w_ > 0:
+            t_ = int(tm[pid_])
+            a_, d_ = out.get(t_, (0.0, 0.0))
+            out[t_] = (a_ + w_ * float(shares.at[pid_, "att"]), d_ + w_ * float(shares.at[pid_, "def"]))
+    return {k_: (round(min(a_, 0.9), 4), round(min(d_, 0.9), 4)) for k_, (a_, d_) in out.items()}
+
+
+def _absence_factor(miss, own, opp, coefs):
+    """Multiplier on a side's expected goals: missing attackers cut his own team's goals, missing defenders/keeper on the other side add to them."""
+    a_loss, d_gain = coefs
+    ma = (miss or {}).get(own, (0.0, 0.0))[0]
+    md = (miss or {}).get(opp, (0.0, 0.0))[1]
+    return float(np.clip((1 - a_loss * ma) * (1 + d_gain * md), 0.5, 1.6))
+
+
+@st.cache_data(show_spinner=False, max_entries=4)
+def absence_effect_fit(long, fin, h, players, p):
+    """How much missing players really move match outcomes, measured on this season's finished matches. A 'missing' player is a regular
+    (averaged 60+ minutes over his previous three gameweeks) who played 0 minutes in that match: the same information as a confirmed team
+    sheet. Each past match is re-predicted from earlier matches only, with and without the adjustment, for a grid of strengths; the
+    strength with the lowest log loss is used. Returns ((attack loss, defence gain), table of results, matches tested)."""
+    xw = float(p.get("xg_weight", 0.75))
+    hl, ridge, xw = best_rating_settings(long, fin, xw)
+    cases = []
+    for g in sorted(int(x) for x in fin["event"].unique()):
+        if g < 4:
+            continue
+        rt = fit_poisson_ratings(long, g, xw, hl, ridge)
+        if rt is None:
+            continue
+        sh = player_shares(h, players, g)
+        prev = h[(h["round"] < g) & (h["round"] >= g - 3)]
+        reg = prev.groupby("id")["min_pm"].agg(["mean", "size"])
+        reg = set(reg[(reg["mean"] >= 60) & (reg["size"] >= 2)].index)
+        now = h[h["round"] == g].set_index("id")["minutes"]
+        missing = {int(i_): 1.0 for i_ in reg if float(now.get(i_, 0.0)) == 0.0}
+        miss = team_absence(missing, sh, players)
+        for _, f in fin[fin["event"] == g].iterrows():
+            ht, at = int(f["team_h"]), int(f["team_a"])
+            lh, la = _ratings_lambdas(rt, ht, at)
+            hs, as_ = int(f["team_h_score"]), int(f["team_a_score"])
+            cases.append((lh, la, ht, at, miss, 0 if hs > as_ else (1 if hs == as_ else 2)))
+    if len(cases) < 20:
+        return (0.0, 0.0), pd.DataFrame(), len(cases)
+    rows = []
+    for a_loss in (0.0, 0.25, 0.5, 0.75, 1.0):
+        for d_gain in (0.0, 0.15, 0.3, 0.5):
+            ll = br = hit = 0.0
+            for lh, la, ht, at, miss, out in cases:
+                M = score_matrix(lh * _absence_factor(miss, ht, at, (a_loss, d_gain)), la * _absence_factor(miss, at, ht, (a_loss, d_gain)))
+                pv = np.array([np.tril(M, -1).sum(), np.trace(M), np.triu(M, 1).sum()])
+                ll -= np.log(max(pv[out], 1e-6))
+                br += float(((pv - np.eye(3)[out]) ** 2).sum())
+                hit += float(np.argmax(pv) == out)
+            n_ = len(cases)
+            rows.append({"Attack loss": a_loss, "Defence gain": d_gain, "Log loss": ll / n_, "Brier": br / n_, "Right result %": 100 * hit / n_})
+    tab = pd.DataFrame(rows)
+    best = tab.loc[tab["Log loss"].idxmin()]
+    return (float(best["Attack loss"]), float(best["Defence gain"])), tab, len(cases)
+
+
+@st.cache_data(show_spinner=False, max_entries=16)
+def fixture_predictions(long, fx_g, cutoff, p, mkt_team=None, mkt_w=0.0, fin=None, miss=None, coefs=(0.0, 0.0)):
+    """Expected goals for each side from the season-long Poisson team ratings (falls back to the AER team model very early in the
+    season), blended with bookmaker-implied goals when odds were fetched."""
+    xw = float(p.get("xg_weight", 0.75))
+    hl, ridge, xw = best_rating_settings(long, fin, xw) if fin is not None and len(fin) else (12.0, 3.0, xw)
+    rt = fit_poisson_ratings(long, cutoff, xw, hl, ridge)
+    team = fit_team_model(long, cutoff, p) if rt is None else None
+    rows = []
+    for _, f in fx_g.iterrows():
+        h, a = int(f["team_h"]), int(f["team_a"])
+        if rt is not None:
+            lh, la = _ratings_lambdas(rt, h, a)
+            src_ = "season team ratings"
+        else:
+            lh = team["att_h"][h] * team["def_a"][a] / team["base_h"]
+            la = team["att_a"][a] * team["def_h"][h] / team["base_a"]
+            src_ = "early-season team model"
+        if mkt_team and (f["id"], h) in mkt_team and mkt_w > 0:
+            mh, ma = mkt_team[(f["id"], h)]
+            if pd.notna(mh) and pd.notna(ma):
+                lh, la, src_ = mkt_w * mh + (1 - mkt_w) * lh, mkt_w * ma + (1 - mkt_w) * la, src_ + " + bookmaker odds"
+        lh0, la0 = lh, la
+        if miss and any(coefs):          # team news: who's missing on each side
+            lh, la = lh * _absence_factor(miss, h, a, coefs), la * _absence_factor(miss, a, h, coefs)
+        lh, la = float(np.clip(lh, 0.1, 5)), float(np.clip(la, 0.1, 5))
+        M = score_matrix(lh, la)
+        sc, psc, top, ptop = _predicted_score(M)
+        flat = sorted(((M[i, j], i, j) for i in range(6) for j in range(6)), reverse=True)
+        rows.append({"fid": f["id"], "home": h, "away": a, "xg_h": lh, "xg_a": la,
+                     "p_home": float(np.tril(M, -1).sum()), "p_draw": float(np.trace(M)), "p_away": float(np.triu(M, 1).sum()),
+                     "score": sc, "p_score": psc, "top_score": top, "p_top": ptop,
+                     "next_scores": ", ".join(f"{i}–{j} ({q * 100:.0f}%)" for q, i, j in flat[:3]),
+                     "cs_h": float(M[:, 0].sum()), "cs_a": float(M[0, :].sum()), "btts": float(M[1:, 1:].sum()),
+                     "over25": float(sum(M[i, j] for i in range(M.shape[0]) for j in range(M.shape[1]) if i + j >= 3)),
+                     "source": src_, "hl": hl, "ridge": ridge, "xw": xw, "dxg_h": lh - float(np.clip(lh0, 0.1, 5)),
+                     "dxg_a": la - float(np.clip(la0, 0.1, 5))})
+    return pd.DataFrame(rows)
+
+
+@st.cache_data(show_spinner=False, max_entries=4)
+def prediction_backtest(long, fin, p):
+    """Every finished fixture predicted only from the matches before its gameweek: how often the likeliest result happened, how much
+    probability went on what actually happened, and how a 'no information' guess (this season's home/draw/away rates so far) compares.
+    (The fade/shrink setting is chosen on these same matches, so treat the figures as slightly optimistic.)"""
+    rows = []
+    for g in sorted(int(x) for x in fin["event"].unique()):
+        if g < 4:
+            continue
+        fg = fin[fin["event"] == g]
+        prev = fin[fin["event"] < g]
+        pr = fixture_predictions(long, fg[["id", "team_h", "team_a"]], g, p, fin=fin)
+        if pr.empty or prev.empty:
+            continue
+        hw = float((prev["team_h_score"] > prev["team_a_score"]).mean())
+        dr = float((prev["team_h_score"] == prev["team_a_score"]).mean())
+        base = np.array([hw, dr, 1 - hw - dr])
+        for _, r_ in pr.merge(fg[["id", "team_h_score", "team_a_score"]], left_on="fid", right_on="id").iterrows():
+            hs, as_ = int(r_["team_h_score"]), int(r_["team_a_score"])
+            out = 0 if hs > as_ else (1 if hs == as_ else 2)
+            pv = np.array([r_["p_home"], r_["p_draw"], r_["p_away"]])
+            y = np.eye(3)[out]
+            rows.append({"GW": g, "hit": int(np.argmax(pv) == out), "base_hit": int(np.argmax(base) == out), "p_actual": float(pv[out]),
+                         "brier": float(((pv - y) ** 2).sum()), "base_brier": float(((base - y) ** 2).sum()),
+                         "exact": int(r_["score"] == f"{hs}–{as_}")})
+    return pd.DataFrame(rows)
+
+
+
+# =========================================================
+# DPS — "process points": expected FPL points from stats that repeat, with no goals/assists/bonus actually scored
+# =========================================================
+DPS_STATS = {"xg": "expected_goals", "xa": "expected_assists", "dc": "defensive_contribution", "sv": "saves", "bonus": "bonus",
+             "yc": "yellow_cards"}
+
+
+@st.cache_data(show_spinner=False, max_entries=48)
+def dps_rates(h, cutoff, hl=6.0):
+    """Each player's per-90 rate for every process stat, from games of 30+ minutes before `cutoff` (recent games count most), pulled toward
+    his position's norm in proportion to how unreliable that stat is. Reliability is measured from the data: the share of game-to-game
+    variation that is real difference between players (empirical Bayes; Efron & Morris 1975). A stat that barely repeats is pulled hard;
+    one that repeats strongly is trusted. Returns (rates by player, single-game reliability by stat and position)."""
+    cols = list(DPS_STATS.values())
+    d = h[(h["round"] < cutoff) & (h["minutes"] >= 30)][["id", "element_type", "round", "minutes"] + cols].copy()
+    if d.empty:
+        return pd.DataFrame(), {}
+    d["w"] = 0.5 ** ((cutoff - 1 - d["round"]) / hl) * d["minutes"] / 90.0
+    out = pd.DataFrame(index=pd.Index(sorted(d["id"].unique()), name="id"))
+    out["element_type"] = d.groupby("id")["element_type"].first()
+    rel = {}
+    for k_, c_ in DPS_STATS.items():
+        d["r"] = d[c_] * 90.0 / d["minutes"]
+        d["wr"] = d["w"] * d["r"]
+        g_ = d.groupby("id")
+        W, W2 = g_["w"].sum(), (d["w"] ** 2).groupby(d["id"]).sum()
+        m_ = g_["wr"].sum() / W
+        n_eff = (W ** 2 / W2).clip(lower=1)
+        d["dev2"] = d["w"] * (d["r"] - d["id"].map(m_)) ** 2
+        shr = pd.Series(np.nan, index=out.index)
+        for et_ in (1, 2, 3, 4):
+            ids_ = out.index[out["element_type"] == et_]
+            if not len(ids_):
+                continue
+            mu = float(np.average(m_[ids_], weights=W[ids_]))
+            sig_w = float(d.loc[d["id"].isin(ids_), "dev2"].sum() / max(d.loc[d["id"].isin(ids_), "w"].sum(), 1e-9))
+            var_b = float(np.average((m_[ids_] - mu) ** 2, weights=W[ids_]))
+            tau2 = max(var_b - float(np.average(sig_w / n_eff[ids_], weights=W[ids_])), 1e-6 + 0.01 * var_b)
+            r_i = tau2 / (tau2 + sig_w / n_eff[ids_])
+            shr[ids_] = mu + r_i * (m_[ids_] - mu)
+            rel[(k_, et_)] = tau2 / (tau2 + sig_w) if sig_w > 0 else 1.0
+        out[k_] = shr
+    return out, rel
+
+
+def dps_points(rows, rates, rt, fx_g):
+    """Process points for each row (index = player id; needs element_type, team, xMins, p_app, p60_used, n_fix, optional av).
+    Uses the season team ratings for the opponent (attack boost / clean-sheet chance); no outcome stats."""
+    r = rows.copy()
+    rt_ = rates.reindex(r.index)
+    pos_mean = rates.groupby("element_type")[list(DPS_STATS)].mean() if len(rates) else pd.DataFrame()
+    for k_ in DPS_STATS:
+        fill_ = r["element_type"].map(pos_mean[k_]) if k_ in pos_mean else 0.0
+        r[k_] = rt_[k_].fillna(fill_).fillna(0.0) if k_ in rt_ else fill_
+    fix_ = {}
+    for _, f in fx_g.iterrows():
+        fix_.setdefault(int(f["team_h"]), (int(f["team_a"]), 1))
+        fix_.setdefault(int(f["team_a"]), (int(f["team_h"]), 0))
+    et = r["element_type"].astype(int).to_numpy()
+    tm = r["team"].astype(int).to_numpy()
+    att_f, lam_ag, opp_att = np.ones(len(r)), np.full(len(r), 1.35), np.ones(len(r))
+    has_fx = np.array([t_ in fix_ for t_ in tm])
+    if rt is not None:
+        base, home, att, leak = rt
+        for i_, t_ in enumerate(tm):
+            if t_ in fix_:
+                o_, hm_ = fix_[t_]
+                att_f[i_] = np.exp(leak[o_] + home * (hm_ - 0.5))
+                opp_att[i_] = np.exp(att[o_] + home * ((1 - hm_) - 0.5))
+                lam_ag[i_] = np.exp(base + att[o_] + leak[t_] + (home if hm_ == 0 else 0.0))
+    av = r["av"].to_numpy(float) if "av" in r.columns else np.ones(len(r))
+    m = pd.to_numeric(r["xMins"], errors="coerce").fillna(0).to_numpy(float) / 90.0
+    p60 = np.clip(pd.to_numeric(r["p60_used"], errors="coerce").fillna(0).to_numpy(float) * av, 0, 1)
+    nf = np.maximum(pd.to_numeric(r["n_fix"], errors="coerce").fillna(1).to_numpy(float), 1)
+    goals = r["xg"].to_numpy(float) * m * att_f * GOAL_PTS[et]
+    assists = r["xa"].to_numpy(float) * m * att_f * 3
+    cs = p60 * np.exp(-lam_ag) * CS_PTS[et] * nf
+    defcon = 2 * p60 * nb_tail(r["dc"].to_numpy(float) * 0.95, DEFCON_LIMIT[et]) * nf
+    saves = np.where(et == 1, exp_floor_div(r["sv"].to_numpy(float) * m * opp_att, 3), 0.0)
+    lg = np.clip(lam_ag * m, 1e-6, None)
+    pmf = np.exp(-lg[:, None]) * lg[:, None] ** POISSON_K / POISSON_FACT
+    gc = np.where(et <= 2, -(pmf * (POISSON_K // 2)).sum(1), 0.0)
+    bonus = r["bonus"].to_numpy(float) * m
+    cards = -r["yc"].to_numpy(float) * m
+    app = pd.to_numeric(r["p_app"], errors="coerce").fillna(0).to_numpy(float)
+    total = np.where(has_fx, app + goals + assists + cs + defcon + saves + gc + bonus + cards, 0.0)
+    return pd.DataFrame({"DPS": total, "dps_goals": goals, "dps_assists": assists, "dps_cs": cs, "dps_defcon": defcon,
+                         "dps_bonus": bonus}, index=r.index)
+
+
+@st.cache_data(show_spinner=False, max_entries=4)
+def dps_validation(train, h, long, fin, fx_all, players, p):
+    """Process points for every past player-gameweek, built only from what was known before that gameweek, scored against what each
+    player actually got, alongside the model's structural forecast and plain recent form."""
+    if train is None or train.empty:
+        return pd.DataFrame()
+    t = train[train["season"] == "this season"] if "season" in train.columns else train[train["GW"] >= 1]
+    xw = float(p.get("xg_weight", 0.75))
+    hl, ridge, xw = best_rating_settings(long, fin, xw) if len(fin) else (12.0, 3.0, xw)
+    tm_ = players.set_index("id")["team"]
+    parts = []
+    for g in sorted(int(x) for x in t["GW"].unique()):
+        if g < 3:
+            continue
+        rows_g = t[t["GW"] == g].drop_duplicates("id").set_index("id")
+        rows_g = rows_g.assign(team=tm_.reindex(rows_g.index)).dropna(subset=["team"])
+        rates_g, _ = dps_rates(h, g)
+        if not len(rates_g):
+            continue
+        rt_g = fit_poisson_ratings(long, g, xw, hl, ridge)
+        dp_ = dps_points(rows_g, rates_g, rt_g, fx_all[fx_all["event"] == g])
+        parts.append(pd.DataFrame({"GW": g, "id": rows_g.index, "dps": dp_["DPS"].to_numpy(), "xPts": rows_g["xPts"].to_numpy(),
+                                   "form": rows_g["form"].to_numpy(), "actual": rows_g["actual"].to_numpy(),
+                                   "element_type": rows_g["element_type"].to_numpy()}))
+    return pd.concat(parts, ignore_index=True) if parts else pd.DataFrame()
+
+
+def _fit_stats(pred, act):
+    pred, act = np.asarray(pred, float), np.asarray(act, float)
+    ok = np.isfinite(pred) & np.isfinite(act)
+    pred, act = pred[ok], act[ok]
+    var = ((act - act.mean()) ** 2).sum()
+    return {"R²": 1 - ((act - pred) ** 2).sum() / var if var else np.nan, "Rank corr": rank_corr(pd.Series(pred), pd.Series(act)),
+            "Avg miss (pts)": float(np.abs(act - pred).mean()), "Bias (pts)": float((pred - act).mean())}
+
+
+METRIC_UNITS = {
+    "AER": ("AER (pts)", "Expected FPL points over the gameweeks summed. Unit: points."),
+    "Base": ("Base (pts)", "Structural forecast before the learned correction. Unit: points."),
+    "Floor": ("Floor (pts)", "A bad week: 10% of similar forecasts scored this or less. Unit: points."),
+    "Ceiling": ("Ceiling (pts)", "A great week: 10% of similar forecasts scored this or more. Unit: points."),
+    "Theta Swole": ("Theta (pts vs repl.)", "Expected points above a replacement-level player at the same position. Unit: points."),
+    "Upgrade vs my XI": ("Upgrade (pts)", "Points gained over your weakest starter at his position. Unit: points."),
+    "Pts added": ("Pts added (pts)", "Projected points your team gains by claiming him. Unit: points."),
+    "WPA %": ("WPA (% pts)", "Percentage points added to your chance of winning your next matchups."),
+    "Elite %": ("Haul chance (%)", "Chance of a top-20% week for his position (points well above an ordinary player in his minutes)."),
+    "Haul pts": ("Haul pts (pts)", "Expected points from big weeks: haul chance × the points he usually scores in a haul week. Unit: points."),
+    "Haul size": ("Haul size (pts)", "Points he usually scores in a top-20% week (his own, pulled toward his position's norm). Unit: points."),
+    "DPS": ("DPS (pts)", "Process points: expected FPL points from repeatable stats only (expected goals and assists, minutes, clean-sheet chance, "
+            "DEFCON, saves, bonus rate), each pulled toward the position norm by how unreliable it is, and adjusted for the opponent. Unit: points."),
+    "AER − DPS": ("AER − DPS (pts)", "Above 0 = his forecast is running ahead of his underlying process (likely to cool); below 0 = due. Unit: points."),
+    "Green score": ("Green score (0–100)", "Strength across seven areas (expected points, upside, minutes, attack, defence, bonus, value to "
+                    "your team), each counted once: 0 = nothing above the median, 100 = the very top in every area."),
+    "Green cells": ("Green areas", "How many of the seven areas he is in the top quarter for (forwards are scored on six: no defence)."),
+    "xBonus": ("xBonus (pts)", "Expected bonus points from simulating each match's bonus race. Unit: points."),
+    "P(3 bonus) %": ("3-bonus chance (%)", "Chance of the maximum 3 bonus points."),
+    "BPS ceil": ("BPS ceiling (/90)", "A great day's bonus-points-system score per 90 minutes."),
+    "Mins": ("Mins (exp.)", "Expected minutes."),
+    "xG": ("xG (goals)", "Expected goals this gameweek."), "xA": ("xA (assists)", "Expected assists this gameweek."),
+    "CS %": ("Clean sheet (%)", "Chance his team keeps a clean sheet."), "Confidence %": ("Confidence (%)", "How sure the forecast is."),
+}
 
 # =========================================================
 # RANKINGS
@@ -3468,8 +4391,8 @@ def pitch_html(xi, bench, col="AER1", show_dps=False):
 with _Section(page == "Rankings"):
     pool = players.copy()
     pool["label"] = pool["web_name"] + " (" + pool["team_code"] + ")"
-    RSUB = {"Ranked players": ":material/format_list_numbered:", "DPS team": ":material/bolt:", "Team stability": ":material/tune:",
-            "Playing time": ":material/schedule:"}
+    RSUB = {"Ranked players": ":material/format_list_numbered:", "BPS": ":material/military_tech:", "DPS team": ":material/bolt:",
+            "Team stability": ":material/tune:", "Playing time": ":material/schedule:"}
     rank_sub = _seg("Rankings view", list(RSUB), "rank_sub", RSUB)
     _on = page == "Rankings"
     with _Section(_on and rank_sub == "Playing time"):
@@ -3714,7 +4637,7 @@ with _Section(page == "Rankings"):
         # DPS for every player (index percentiles among all players with minutes, so values don't shift with filters)
         ep_col_ = ep_map.get(selected_gw)
 
-        def add_dps(frame, ref):
+        def _old_add_dps(frame, ref):
             """DPS = (DPS formula + FPL xP) / 2 (formula alone where FPL publishes no xP).
             Percentile indices are taken within position among `ref`."""
             idx5 = [ict_pct(ref[c], ref["position"]).reindex(frame.index).fillna(0).to_numpy(float)
@@ -3726,14 +4649,27 @@ with _Section(page == "Rankings"):
             dps_final = np.where(fpl_xp.notna(), (dd + fpl_xp.to_numpy(float)) / 2.0, dd)
             return frame.assign(DPS=dps_final, DPS_raw=dd, FPL_xP=fpl_xp)
 
-        df = add_dps(df, df[df["E90"] > 0] if (df["E90"] > 0).any() else df)
+        # DPS = process points (see dps_points): expected points from repeatable stats only, opponent-adjusted with the season team ratings
+        rates_now, dps_rel = dps_rates(ctx["h"], selected_gw)
+        _hl_r, _rg_r, _xw_r = best_rating_settings(ctx["long"], ctx["fin"], float(p["xg_weight"])) if len(ctx["fin"]) else (12.0, 3.0, float(p["xg_weight"]))
+        rt_now = fit_poisson_ratings(ctx["long"], selected_gw, _xw_r, _hl_r, _rg_r)
+        _dp = dps_points(df.assign(av=first_av.reindex(df.index).fillna(1.0)), rates_now, rt_now, fx[fx["event"] == selected_gw])
+        df["DPS"] = _dp["DPS"]
+        for c_ in ("dps_goals", "dps_assists", "dps_cs", "dps_defcon", "dps_bonus"):
+            df[c_] = _dp[c_]
+        df["DPS_raw"] = df["DPS"]
+        df["FPL_xP"] = pd.to_numeric(df[ep_col_], errors="coerce") if (ep_col_ and ep_col_ in df.columns) else np.nan
+        df["HotCold"] = df["AER1"] - df["DPS"]
 
         # ---- Theta Swole: projected points above a replacement-level player at the same position ----
         #   theta = [AER + beta * (DPS not explained by AER)] - replacement level for his position + risk appetite * (Ceiling - Floor)
         theta_beta = 0.0
-        if model_ok and len(wf_use):
-            _hist = dps_history(wf_use, alpha, god_conv, dd_mode)
-            theta_beta = fit_theta_beta(pd.concat(_hist, ignore_index=True) if _hist else None)
+        dps_val = dps_validation(train_df[train_df["GW"] < selected_gw] if len(train_df) else train_df, ctx["h"], ctx["long"], ctx["fin"], fx, players, p)
+        if model_ok and len(wf_use) and len(dps_val):
+            _vv = dps_val.merge(wf_use.assign(aer=np.clip(wf_use["xPts"] + alpha * wf_use["adj"], 0, None))[["id", "GW", "aer"]], on=["id", "GW"])
+            if len(_vv):
+                _vv["resid"] = _vv.groupby("GW", group_keys=False).apply(lambda g_: pd.Series(dps_resid(g_["dps"].to_numpy(), g_["aer"].to_numpy()), index=g_.index))
+                theta_beta = fit_theta_beta(_vv[["resid", "actual", "aer"]])
         _ok = (df["E90"] > 0) & (df["n_fix"] > 0) & (df["AER1"] > 0)
         df["DPS_signal"] = theta_beta * dps_resid(df["DPS_raw"].to_numpy(float), df["AER1"].to_numpy(float), _ok.to_numpy())
         df["E_adj"] = df["AER"] + df["DPS_signal"]
@@ -3774,6 +4710,135 @@ with _Section(page == "Rankings"):
                 df.loc[wt_.index, "WPA"] = wt_["WPA"]
                 df.loc[wt_.index, "PtsAdded"] = wt_["PtsAdded"]
                 df.loc[wt_.index, "Drop"] = wt_["DropId"].map(df["web_name"]).fillna("")
+        # ---- BPS profile (average / floor / ceiling per 90, within position) and the bonus race simulation ----
+        BPS_COLS = ["bps_avg", "bps_floor", "bps_ceil", "bps_vol", "bps_n", "z_bps_avg", "z_bps_floor", "z_bps_ceil",
+                    "pct_bps_avg", "pct_bps_floor", "pct_bps_ceil"]
+        for c_ in BPS_COLS + ["xBonus", "P3bonus", "Pbonus"]:
+            df[c_] = np.nan
+        bps_err = None
+        try:
+            prof_ = bps_profile(ctx["h"], selected_gw)
+            if len(prof_):
+                pr_ = prof_.reindex(df.index)
+                for c_ in BPS_COLS:
+                    df[c_] = pr_[c_].to_numpy()
+                med_ = prof_.groupby("element_type")[["bps_avg", "bps_floor", "bps_ceil", "bps_vol"]].median()
+                for c_ in ["bps_avg", "bps_floor", "bps_ceil", "bps_vol"]:
+                    df[c_] = df[c_].fillna(df["element_type"].map(med_[c_]))
+                for c_ in ["z_bps_avg", "z_bps_floor", "z_bps_ceil"]:
+                    df[c_] = df[c_].fillna(0.0)
+                start_p = (df["p60_used"] * first_av.reindex(df.index).fillna(1.0)).clip(0, 1)
+                slim_ = pd.DataFrame({"team": df["team"].astype(int), "start_p": start_p, "sub_p": (df["appear"] - start_p).clip(0, 1),
+                                      "scale": np.sqrt(((df["AER1"] + 1) / (pd.to_numeric(df["ppg"], errors="coerce").fillna(0) + 1)).clip(0.6, 1.6)),
+                                      "bps_avg": df["bps_avg"], "bps_floor": df["bps_floor"], "bps_ceil": df["bps_ceil"]}, index=df.index).fillna(0)
+                bs_ = bonus_sim(slim_, fx[fx["event"] == selected_gw][["id", "team_h", "team_a"]])
+                df["xBonus"], df["P3bonus"], df["Pbonus"] = bs_["xBonus"], bs_["P3"], bs_["Pany"]
+        except Exception as e_b:
+            bps_err = f"{type(e_b).__name__}: {e_b}"
+        # ---- Zipf xVR: expected points from the top-20% haul tail, Zipf-weighted by rank ----
+        df["ZipfXVR"], df["EliteP"], df["EliteSize"], df["HaulPts"], df["HaulSize"] = 0.0, np.nan, np.nan, np.nan, np.nan
+        zipf_info = {"law": pd.DataFrame(), "model": None, "tr_coef": 0.0, "tr_z": 0.0, "tr_used": False, "kappa": np.nan, "s": np.nan}
+        try:
+            _exp = train_df[["id", "GW", "xPts"]] if len(train_df) and "xPts" in train_df.columns else None
+            if _exp is not None and "season" in train_df.columns:
+                _exp = train_df.loc[train_df["season"] == "this season", ["id", "GW", "xPts"]]
+            _h_before = ctx["h"][ctx["h"]["round"] < selected_gw]
+            Zt, zlaw = zipf_table(_h_before, _exp, "position")
+            if len(Zt):
+                zh = zipf_history(Zt)
+                zrows = zipf_training_rows(train_df[train_df["GW"] < selected_gw] if len(train_df) else train_df, Zt, zh, ctx["h"])
+                zrows = add_theta_feats(zrows, wf_use, alpha, god_conv, dd_mode, n_teams) if len(zrows) else zrows
+                zb_ = zipf_backtest(zrows)
+                # the original definition (points over each player's own forecast), kept only for comparison
+                try:
+                    Zo, _ = zipf_table(_h_before, _exp, "forecast")
+                    zbo_ = zipf_backtest(zipf_training_rows(train_df[train_df["GW"] < selected_gw] if len(train_df) else train_df, Zo, zipf_history(Zo), ctx["h"]))
+                    if len(zbo_) and len(zb_):
+                        zipf_info["defs"] = pd.DataFrame({
+                            "Over each player's own forecast (old)": zbo_[["AUC (picking the top 20%)", "Top-20 pts by Zipf xVR", "Hauls among xVR top 20"]].mean(),
+                            "Over the position baseline (new)": zb_[["AUC (picking the top 20%)", "Top-20 pts by Zipf xVR", "Hauls among xVR top 20"]].mean()})
+                except Exception:
+                    pass
+                # pick the elite model's inputs by out-of-sample hit rate: the standard set, without the BPS profile, or with Theta's ingredients.
+                # A change from the standard set needs +0.002 AUC on average and to win at least half the gameweeks.
+                converge, use_bps, variant = False, True, "standard inputs"
+                if len(zb_) and "AUC with Theta Swole inputs" in zb_.columns:
+                    base_ = zb_["AUC (picking the top 20%)"]
+                    best_gain = 0.0
+                    for name_, col_ in (("with Theta Swole's inputs", "AUC with Theta Swole inputs"), ("without the BPS profile", "AUC without BPS profile")):
+                        d_ = (zb_[col_] - base_).dropna()
+                        if len(d_) >= 3 and d_.mean() > max(0.002, best_gain) and (d_ > 0).mean() >= 0.5:
+                            best_gain, variant = float(d_.mean()), name_
+                    converge, use_bps = variant.startswith("with Theta"), not variant.startswith("without")
+                    d_auc = (zb_["AUC with Theta Swole inputs"] - base_).dropna()
+                    zipf_info.update(auc_base=float(zb_["AUC (picking the top 20%)"].mean()),
+                                     auc_conv=float(zb_["AUC with Theta Swole inputs"].mean()),
+                                     auc_theta=float(zb_["AUC of Theta Swole alone"].mean()), conv_wins=float((d_auc > 0).mean()) if len(d_auc) else np.nan,
+                                     hist_rho=float(zb_["Rank corr Theta Swole vs xVR"].mean()))
+                zipf_info.update(converge=converge, use_bps=use_bps, variant=variant,
+                                 auc_nobps=float(zb_["AUC without BPS profile"].mean()) if len(zb_) else np.nan)
+                zm = zipf_model(zrows, theta=converge, bps=use_bps)
+                cmod = credit_fit(zrows) if len(zrows) else None
+                live = zh[zh["GW"] == zh["GW"].max()].set_index("id")
+                feat_live = df.assign(elite_rate=live["elite_rate"].reindex(df.index).fillna(0.2))
+                # Theta Swole's ingredients for this gameweek, built exactly as in the training rows
+                _xp = pd.to_numeric(df["xPts"], errors="coerce").fillna(0)
+                _repl = replacement_levels(df.assign(_xp=_xp), "_xp", n_teams)
+                _okr = (df["E90"] > 0) & (df["n_fix"] > 0) & (df["AER1"] > 0)
+                feat_live = feat_live.assign(theta_rel=_xp - df["element_type"].map(_repl),
+                                             dps_resid=dps_resid(df["DPS_raw"].to_numpy(float), df["AER1"].to_numpy(float), _okr.to_numpy()),
+                                             spread=(df["Ceiling"] - df["Floor"]).fillna(0), upside=(df["Ceiling"] - df["AER1"]).fillna(0))
+                if zm is not None:
+                    pz = pd.Series(logit_predict(zm, _zipf_X(feat_live, bps=use_bps, theta=converge).to_numpy()), index=df.index)
+                else:          # too little history for the model: decayed elite rate alone
+                    pz = feat_live["elite_rate"].astype(float)
+                # transfers in: only if a past season shows they predict the top 20% beyond everything else (z > 2)
+                if seasons_used and "code" in df.columns:
+                    coef_, z_, n_ = zipf_transfer_check(seasons_used[0], p_key)
+                    zipf_info.update(tr_coef=coef_, tr_z=z_)
+                    tin_ = load_transfers_in()
+                    if z_ > 2 and coef_ > 0 and len(tin_):
+                        lt_ = np.log1p(df["code"].map(tin_).fillna(0).clip(lower=0))
+                        zt_ = (lt_ - lt_.mean()) / (lt_.std() + 1e-9)
+                        lo_ = np.log(pz.clip(1e-6, 1 - 1e-6) / (1 - pz.clip(1e-6, 1 - 1e-6))) + coef_ * zt_
+                        pz = 1 / (1 + np.exp(-lo_))
+                        zipf_info["tr_used"] = True
+                el_ = Zt[Zt["elite"] > 0]
+                cpos_ = el_.groupby("element_type")["credit"].mean()
+                c_prior = df["element_type"].map(cpos_).fillna(float(el_["credit"].mean()) if len(el_) else 1.0)
+                n_el = live["n_elite"].reindex(df.index).fillna(0)
+                c_mean = live["credit_mean"].reindex(df.index)
+                c_model = (pd.Series(credit_predict(cmod, _zipf_X(feat_live).to_numpy()), index=df.index) if cmod is not None else c_prior)
+                # his own elite weeks blended with the learned size, in log space so one freak haul can't dominate (heavy tail, regresses)
+                c_shr = np.expm1((np.log1p(c_mean.fillna(0).clip(lower=0)) * n_el + 3.0 * np.log1p(np.clip(c_model, 0, None))) / (n_el + 3.0))
+                kappa_ = float(el_["total_points"].clip(lower=0).mean() / max(el_["credit"].mean(), 1e-9)) if len(el_) else 1.0
+                avail_ = first_av.reindex(df.index).fillna(1.0) * (df["n_fix"] > 0)
+                df["EliteP"] = (pz * avail_).clip(0, 1)
+                df["EliteSize"] = c_shr * kappa_
+                df["ZipfXVR"] = df["EliteP"] * df["EliteSize"]          # research index (Accuracy page); not shown as a ranking
+                # Haul points, in real FPL points: haul chance x the points he scores in a typical haul week (his own haul weeks, pulled
+                # toward his position's typical haul by three pseudo-weeks, so one big week doesn't decide it)
+                _hp = el_.assign(pts=el_["total_points"].clip(lower=0))
+                _pos_h = _hp.groupby("element_type")["pts"].mean()
+                _own_h = _hp.groupby("id")["pts"].agg(["mean", "count"])
+                _nh = _own_h["count"].reindex(df.index).fillna(0)
+                _prior_h = df["element_type"].map(_pos_h).fillna(float(_hp["pts"].mean()) if len(_hp) else 6.0)
+                df["HaulSize"] = (_own_h["mean"].reindex(df.index).fillna(0) * _nh + 3.0 * _prior_h) / (_nh + 3.0)
+                # the points from big weeks are part of his expected points, so they can't exceed AER (the two models are fitted separately)
+                df["HaulPts"] = np.minimum(df["EliteP"] * df["HaulSize"], df["AER1"].clip(lower=0))
+                # how alike are the two ratings right now? (players with a fixture and minutes this season)
+                _el = (df["n_fix"] > 0) & (df["AER1"] > 0) & (df["E90"] > 0)
+                if _el.sum() >= 20:
+                    _t, _x = df.loc[_el, "Theta"], df.loc[_el, "ZipfXVR"]
+                    _top_t, _top_x = set(_t.nlargest(20).index), set(_x.nlargest(20).index)
+                    zipf_info.update(rho=float(rank_corr(_t, _x)), top20_overlap=len(_top_t & _top_x),
+                                     rho_pos={POS_GROUP.get(int(et_), "MID"): float(rank_corr(df.loc[_el & (df["element_type"].isin(ets_)), "Theta"],
+                                                                                         df.loc[_el & (df["element_type"].isin(ets_)), "ZipfXVR"]))
+                                              for et_, ets_ in ((1, (1, 2)), (3, (3,)), (4, (4,)))})
+                zipf_info.update(law=zlaw, model=zm, kappa=kappa_, s=float(zlaw["Zipf exponent s"].median()) if len(zlaw) else np.nan,
+                                 rows=zrows, cmod=cmod)
+        except Exception as e_z:
+            zipf_info["error"] = f"{type(e_z).__name__}: {e_z}"
         full_df = df.copy()                                                              # every player, before filters (My Team tab)
 
         if only_wire and taken_ids is not None:
@@ -3787,11 +4852,32 @@ with _Section(page == "Rankings"):
             df = df[df["web_name"].str.contains(search_q, case=False, na=False)
                     | df["first_name"].str.contains(search_q, case=False, na=False)
                     | df["second_name"].str.contains(search_q, case=False, na=False)]
+        # Green score (0-100): seven areas, each counted once, so it isn't AER repeated under different names. In each area a player scores
+        # how far he sits into the green half of the players shown (0 at the median, 1 at the very top); the score is the average over the
+        # areas that apply to his position, faded by confidence like the colours. Green areas = how many areas are in the top quarter.
+        GREEN_AREAS = {"Expected points": ["AER"], "Upside": ["Ceiling", "EliteP"], "Minutes": ["xMins"], "Attack": ["xG", "xA"],
+                       "Defence": ["cs_team", "pdc"], "Bonus": ["xBonus"], "Value to your team": ["WPA", "PtsAdded"]}
+        if len(df):
+            _area = pd.DataFrame(index=df.index)
+            for name_, cols_ in GREEN_AREAS.items():
+                cols_ = [c_ for c_ in cols_ if c_ in df.columns and pd.to_numeric(df[c_], errors="coerce").notna().sum() > 1]
+                if name_ == "Value to your team" and cols_:
+                    cols_ = cols_[:1]                       # WPA if available, otherwise Pts added
+                if cols_:
+                    _area[name_] = df[cols_].apply(pd.to_numeric, errors="coerce").rank(pct=True).mean(axis=1)
+            if "Defence" in _area.columns:
+                _area.loc[df["element_type"] == 4, "Defence"] = np.nan        # forwards score nothing for clean sheets or DEFCON
+            _green = (2 * (_area - 0.5)).clip(lower=0)
+            df["GreenScore"] = (100 * _green.mean(axis=1) * (0.5 + 0.5 * df["Confidence"].fillna(0.5))).round(1)
+            df["GreenCells"] = (_area >= 0.75).sum(axis=1)
+            df["GreenAreas"] = _area.notna().sum(axis=1)
+        else:
+            df["GreenScore"], df["GreenCells"], df["GreenAreas"] = np.nan, 0, 0
         if rank_by == "WPA":
             rank_col = "WPA" if df["WPA"].notna().any() else ("PtsAdded" if df["PtsAdded"].notna().any() else "Theta")
         else:
-            rank_col = {"AER": "AER", "DPS": "DPS"}.get(rank_by, "Theta")
-        rank_label = {"WPA": "WPA", "PtsAdded": "Pts added (no head-to-head fixtures found)", "Theta": "Theta Swole", "AER": "AER", "DPS": "DPS"}[rank_col]
+            rank_col = {"AER": "AER", "DPS": "DPS", "Haul points": "HaulPts", "Green score": "GreenScore"}.get(rank_by, "Theta")
+        rank_label = {"GreenScore": "Green score (strong across the most areas)", "HaulPts": "Haul points", "WPA": "WPA", "PtsAdded": "Pts added (no head-to-head fixtures found)", "Theta": "Theta Swole", "AER": "AER", "DPS": "DPS"}[rank_col]
         df = df.sort_values([rank_col, "AER"], ascending=[False, False], na_position="last")
         df["Rank"] = np.arange(1, len(df) + 1)
 
@@ -3800,9 +4886,13 @@ with _Section(page == "Rankings"):
         view = pd.DataFrame({
             # what matters first: who, when, how many points, floor/ceiling, playing time, form, returns, availability
             "Rank": df["Rank"], "Player": df["web_name"], "Pos": df["position"], "Team": df["team_code"], "Opp": df["Opp"], "H/A": ha,
+            "Green score": df["GreenScore"], "Green cells": df["GreenCells"].astype(int).astype(str) + "/" + df["GreenAreas"].astype(int).astype(str),
             "WPA %": (df["WPA"] * 100).round(1), "Pts added": df["PtsAdded"].round(2), "Drop": df["Drop"],
+            "Haul pts": df["HaulPts"].round(2), "Elite %": (df["EliteP"] * 100).round(0), "Haul size": df["HaulSize"].round(1),
+            "BPS avg": df["bps_avg"].round(1), "BPS floor": df["bps_floor"].round(1), "BPS ceil": df["bps_ceil"].round(1),
+            "xBonus": df["xBonus"].round(2), "P(3 bonus) %": (df["P3bonus"] * 100).round(0),
             "Theta Swole": df["Theta"].round(2), "Upgrade vs my XI": df["Upgrade"].round(2), "Replacement": df["Repl"].round(2),
-            "DPS signal": df["DPS_signal"].round(2), "DPS": df["DPS"].round(2), "DPS formula": df["DPS_raw"].round(2), "FPL xP": df["FPL_xP"].round(1),
+            "DPS signal": df["DPS_signal"].round(2), "DPS": df["DPS"].round(2), "AER − DPS": df["HotCold"].round(2), "FPL xP": df["FPL_xP"].round(1),
             "AER": df["AER"].round(2), "Confidence %": (df["Confidence"] * 100).round(0),
             "Floor": df["Floor"].round(1), "Ceiling": df["Ceiling"].round(1),
             "5+ %": (df["P5"] * 100).round(0), "8+ %": (df["P8"] * 100).round(0),
@@ -3848,22 +4938,31 @@ with _Section(page == "Rankings"):
         def forecast_style(invert=False):
             return lambda s: value_colors(s, invert, conf_arr)
 
-        ESSENTIAL = ["Rank", "Player", "Pos", "Team", "Opp", "WPA %", "Pts added", "Drop", "Theta Swole", "DPS", "AER", "Confidence %", "Floor",
+        ESSENTIAL = ["Rank", "Player", "Pos", "Team", "Opp", "Green score", "WPA %", "Pts added", "Drop", "Haul pts", "Elite %", "BPS ceil", "xBonus", "Theta Swole", "DPS", "AER", "Confidence %", "Floor",
                      "Ceiling", "Mins", "Form", "xG", "xA", "CS %", "Status", "Chance %", "News"]
         st.session_state.setdefault("cols_mode", "Essentials")
-        cols_mode = st.radio("Columns", ["Essentials", "Everything"], key="cols_mode", horizontal=True, label_visibility="collapsed",
-                             help="Essentials keeps the table readable; Everything shows every model column.")
+        _c1, _c2 = st.columns([1, 2])
+        cols_mode = _c1.radio("Columns", ["Essentials", "Everything"], key="cols_mode", horizontal=True, label_visibility="collapsed",
+                              help="Essentials keeps the table readable; Everything shows every model column.")
+        if _c2.toggle("Sort by Green score (most and deepest green first)", key="green_sort",
+                      help="Re-orders the table by Green score without changing the 'Rank players by' setting.") and "Green score" in view.columns:
+            _gs = pd.to_numeric(view["Green score"], errors="coerce").fillna(-1).to_numpy()
+            _gn = pd.to_numeric(view["Green cells"].astype(str).str.split("/").str[0], errors="coerce").fillna(0).to_numpy()
+            _ord = np.lexsort((-_gn, -_gs))                       # one order for the table, its colours and its fixture shading
+            view = view.iloc[_ord].reset_index(drop=True)
+            fdr_list = [fdr_list[i_] for i_ in _ord]
+            conf_arr = conf_arr[_ord]
         view_show = view[[c for c in ESSENTIAL if c in view.columns]] if cols_mode == "Essentials" else view
         sty = view_show.style.apply(style_opp, subset=["Opp"], axis=0)
         # model forecasts: hue = how good, strength = how confident
-        for c in ["WPA %", "Pts added", "Theta Swole", "Upgrade vs my XI", "DPS", "DPS formula", "AER", "Base", "Floor", "Ceiling", "5+ %", "8+ %", "Mins", "xG", "xA", "CS %", "DEFCON %",
+        for c in ["Green score", "WPA %", "Pts added", "Haul pts", "Elite %", "Haul size", "xBonus", "P(3 bonus) %", "Theta Swole", "Upgrade vs my XI", "DPS", "AER", "Base", "Floor", "Ceiling", "5+ %", "8+ %", "Mins", "xG", "xA", "CS %", "DEFCON %",
                   "Pts Goals", "Pts Assists", "Pts DEFCON"]:
             if c in view_show.columns:
                 sty = sty.apply(forecast_style(False), subset=[c], axis=0)
         if "Goals Against" in view_show.columns:
             sty = sty.apply(forecast_style(True), subset=["Goals Against"], axis=0)
         # inputs and descriptive stats: same hue, fixed softer strength
-        for c in ["FPL xP", "Mins/Game", "Form", "Creativity", "Threat", "Influence", "Stability", "Leader", "HMPR", "vs Team", "vs System",
+        for c in ["BPS avg", "BPS floor", "BPS ceil", "FPL xP", "Mins/Game", "Form", "Creativity", "Threat", "Influence", "Stability", "Leader", "HMPR", "vs Team", "vs System",
                   "vs Tier", "Stakes", "Opp Missing %", "xG idx", "xA idx", "Creativity idx", "Threat idx", "Influence idx", "70+ Pts/Game",
                   "Matchup", "Mkt CS %", "Mkt Goal %", "Context ×", "Finish ×", "Assist ×"]:
             if c in view_show.columns:
@@ -3880,11 +4979,71 @@ with _Section(page == "Rankings"):
                    + (f"Risk appetite {risk_kappa:+.2f} × (Ceiling − Floor) is added. " if abs(risk_kappa) > 1e-9 else "")
                    + ("**Upgrade vs my XI** = how many points he'd add over your weakest starter at his position."
                       if df["Upgrade"].notna().any() else "Pick your team in the sidebar to see **Upgrade vs my XI**."))
-        st.caption("**DPS (Deterministic Points Scored)** = (DPS formula + FPL xP) ÷ 2. **DPS formula** = ((AER + Form) × (xG + xA + creativity + threat + influence)) ÷ √Ceiling, "
+        _zs = zipf_info.get("s", np.nan)
+        _zl = zipf_info.get("law", pd.DataFrame())
+        st.caption("**Haul points** (pts) = haul chance × the points he usually scores in a haul week: the expected points that come from big weeks. "
+                   "**Haul chance** (Elite %) comes from the Zipf research model: each past gameweek, everyone who played is ranked by points over "
+                   "what an ordinary player in the same position would score in the same minutes; the top 20% earn credit = points ÷ rank^s × (1 + minutes fraction)"
+                   + (f", with the Zipf exponent s fitted from the data (median {_zs:.2f}; the top 20% scored "
+                      f"{_zl['Share of points scored by the top 20%'].mean() * 100:.0f}% of all points)" if len(_zl) else "")
+                   + ". **Elite %** is each player's chance of making the next top 20%, from xG, xA, threat, creativity, BPS (average, floor, "
+                   "ceiling and volatility within his position), minutes, form, position and past elite rate. **Elite size** is how big his "
+                   "top-20% week tends to be, learned from the same signals (BPS ceiling matters most here) and blended with his own elite weeks. "
+                   "(Elite % model fitted on earlier gameweeks"
+                   + ("" if zipf_info.get("model") is not None else "; too little history yet, so it uses past elite rate alone") + "). "
+                   + ("FPL transfers in are included (last season showed they add predictive power). " if zipf_info.get("tr_used") else
+                      (f"FPL transfers in are not used (last season's test: z = {zipf_info.get('tr_z', 0):.1f}, below the 2.0 needed). "
+                       if seasons_used else "FPL transfers in are only used once a past season confirms they help (turn on past seasons). "))
+                   + (f"Elite model inputs in use: **{zipf_info.get('variant', 'standard inputs')}** (chosen by out-of-sample hit rate). ")
+                   + ("**Converged with Theta Swole:** the elite model also uses Theta's ingredients (points above replacement, DPS signal, "
+                      f"floor–ceiling spread and upside), because that picked the top 20% better out of sample (AUC {zipf_info.get('auc_base', float('nan')):.3f} → "
+                      f"{zipf_info.get('auc_conv', float('nan')):.3f}). " if zipf_info.get("converge") else
+                      ("Theta Swole's ingredients were tested in the elite model but didn't improve it out of sample, so they're left out. "
+                       if "auc_conv" in zipf_info else ""))
+                   + (f"Theta Swole and Zipf xVR agree on ordering at ρ = {zipf_info['rho']:.2f}; {zipf_info.get('top20_overlap', 0)} of their top 20 are the same players. "
+                      if "rho" in zipf_info else "")
+                   + "**Green score** (0–100) = strength across seven areas, each counted once: expected points, upside, minutes, attack, "
+                   "defence (not for forwards), bonus and value to your team. Accuracy → Zipf xVR shows whether the haul model picks the top 20%.")
+        st.caption("**DPS (process points, pts)** = expected FPL points from stats that repeat: expected goals and assists, minutes, clean-sheet chance, "
+                   "DEFCON, saves and bonus rate, each pulled toward the position norm by how unreliable the data shows it to be, adjusted for the opponent "
+                   "with the season team ratings. No goals, assists or bonus actually scored are used. **AER − DPS** above 0 = output running ahead of the "
+                   "process (likely to cool); below 0 = due.")
+        st.caption("Old DPS definition, kept for reference: (DPS formula + FPL xP) ÷ 2. **DPS formula** = ((AER + Form) × (xG + xA + creativity + threat + influence)) ÷ √Ceiling, "
                    "for the first target gameweek, with the five terms as 0–1 percentile indices within position. **FPL xP** is FPL's own expected points for this gameweek. "
                    "FPL only publishes it for the current and next gameweek; for other gameweeks DPS is the formula alone.")
-        if df["FPL_xP"].isna().all():
+        if False:
             st.caption(f"ℹ️ FPL publishes no expected points for GW{selected_gw}, so DPS here is the formula part only.")
+    with _Section(_on and rank_sub == "BPS"):
+        st.subheader(f"BPS profile by position · GW{selected_gw}")
+        st.caption("BPS per 90 minutes from games of 30+ minutes, recent games counting most: **average**, **floor** (a bad day, 10th percentile) "
+                   "and **ceiling** (a great day, 90th percentile), each pulled toward the position's norm when a player has few games. Players are "
+                   "only compared with their own position. **xBonus** and **P(3 bonus)** come from simulating every fixture's bonus race 4,000 times "
+                   "with each player's BPS profile, playing-time chances and fixture. Ceiling and floor also feed Zipf xVR (see its caption).")
+        if bps_err:
+            st.warning(f"BPS profile unavailable: {bps_err}")
+        st.session_state.setdefault("bps_sort", "Ceiling")
+        if st.session_state.get("bps_sort") == "Zipf xVR":
+            st.session_state["bps_sort"] = "Haul points"
+        sort_b = st.radio("Sort by", ["Ceiling", "Average", "Floor", "Expected bonus", "Haul points"], key="bps_sort", horizontal=True)
+        col_b = {"Ceiling": "bps_ceil", "Average": "bps_avg", "Floor": "bps_floor", "Expected bonus": "xBonus", "Haul points": "HaulPts"}[sort_b]
+        tabs_b = st.tabs(["Goalkeepers", "Defenders", "Midfielders", "Forwards"])
+        for et_b, tb_b in zip((1, 2, 3, 4), tabs_b):
+            with tb_b:
+                d_b = df[(df["element_type"] == et_b) & (df["bps_n"].fillna(0) >= 1)].sort_values(col_b, ascending=False)
+                if d_b.empty:
+                    st.info("No players with 30+ minute games in the current filters.")
+                    continue
+                t_b = pd.DataFrame({"Player": d_b["web_name"], "Team": d_b["team_code"], "Opp": d_b["Opp"],
+                                    "Ceiling": d_b["bps_ceil"].round(1), "Average": d_b["bps_avg"].round(1), "Floor": d_b["bps_floor"].round(1),
+                                    "Ceiling pct": (d_b["pct_bps_ceil"] * 100).round(0), "Average pct": (d_b["pct_bps_avg"] * 100).round(0),
+                                    "Floor pct": (d_b["pct_bps_floor"] * 100).round(0), "Volatility": d_b["bps_vol"].round(2),
+                                    "xBonus": d_b["xBonus"].round(2), "P(3 bonus) %": (d_b["P3bonus"] * 100).round(0),
+                                    "P(any bonus) %": (d_b["Pbonus"] * 100).round(0), "Haul pts": d_b["HaulPts"].round(2),
+                                    "AER": d_b["AER1"].round(2), "Games": d_b["bps_n"].astype(int)}).reset_index(drop=True)
+                sty_b = t_b.style
+                for c_ in ["Ceiling", "Average", "Floor", "xBonus", "P(3 bonus) %", "P(any bonus) %", "Haul pts", "AER"]:
+                    sty_b = sty_b.apply(lambda s_: pct_colors(s_), subset=[c_], axis=0)
+                st.dataframe(sty_b.format(na_rep="–"), use_container_width=True, hide_index=True, height=520)
     with _Section(_on and rank_sub == "DPS team"):
         st.subheader(f"DPS selected team · GW{selected_gw}")
         dteam_ = dps_team(df)
@@ -3924,6 +5083,9 @@ with _Section(page == "Rankings"):
                    "Detail columns describe the first gameweek and use home stats for home fixtures, away stats for away fixtures.")
         try:
             cfg = {"Rank": st.column_config.NumberColumn("Rank", pinned=True), "Player": st.column_config.TextColumn("Player", pinned=True)}
+            for c_, (lab_, hlp_) in METRIC_UNITS.items():
+                if c_ in view_show.columns:
+                    cfg[c_] = st.column_config.Column(lab_, help=hlp_)
         except Exception:
             cfg = {}
         try:
@@ -4040,6 +5202,268 @@ with _Section(page == "My Team"):
             st.caption("The best lineup maximises projected points under FPL formation rules (1 GK, 3–5 DEF, 2–5 MID, 1–3 FWD). "
                        "Bench cover assumes FPL's automatic substitutions and ignores the formation limits they must respect, so it is slightly generous.")
 
+
+# =========================================================
+# PICK TEAM — tap a player, then tap who to switch him with (as in the FPL app); transfers below
+# =========================================================
+PT_LIMIT = {1: 2, 2: 5, 3: 5, 4: 3}
+PT_NAME = {1: "Goalkeepers", 2: "Defenders", 3: "Midfielders", 4: "Forwards"}
+PT_XI = {1: (1, 1), 2: (3, 5), 3: (2, 5), 4: (1, 3)}       # starters allowed per position
+PT_METRIC = {"AER (expected points)": "AER1", "Theta Swole": "Theta", "Haul points": "HaulPts", "DPS": "DPS", "Green score": "GreenScore"}
+st.markdown(_PITCH_CSS + """<style>
+.st-key-pt_pitch { border-radius: 16px; padding: 12px 8px 4px;
+  background: radial-gradient(ellipse at 50% 45%, rgba(255,255,255,.08), rgba(0,0,0,.16) 85%), repeating-linear-gradient(180deg, #3a9a4f 0 12.5%, #348f48 12.5% 25%);
+  box-shadow: inset 0 0 0 3px rgba(255,255,255,.7); }
+.st-key-pt_bench { border-radius: 14px; padding: 10px 8px 4px; margin-top: 8px; background: linear-gradient(180deg, #e9f7ef, #d4eedd); }
+.st-key-pt_pitch .pc, .st-key-pt_bench .pc { width: 100%; max-width: 110px; margin: 0 auto; }
+.st-key-pt_pitch .stButton, .st-key-pt_bench .stButton { margin-top: 4px; }
+.st-key-pt_pitch .stButton > button, .st-key-pt_bench .stButton > button { min-height: 1.6rem !important; padding: .05rem .3rem !important; margin-top: 0;
+  font-size: .72rem !important; border-radius: 8px !important; max-width: 110px; margin-left: auto; margin-right: auto; display: block; }
+.st-key-pt_pitch [data-testid="stMarkdownContainer"], .st-key-pt_bench [data-testid="stMarkdownContainer"] { overflow: visible; }
+.st-key-pt_pitch .stButton > button[kind="secondary"], .st-key-pt_bench .stButton > button[kind="secondary"] {
+  background: rgba(255,255,255,.9) !important; color: #37003C !important; border: none !important; }
+.st-key-pt_pitch .stButton > button p, .st-key-pt_bench .stButton > button p { font-size: .72rem !important; }
+.st-key-pt_bench [data-testid="stCaptionContainer"] p { color: #37003C !important; text-align: center; }
+</style>""", unsafe_allow_html=True)
+
+
+def _keyed_container(key):
+    try:
+        return st.container(key=key)
+    except TypeError:          # older Streamlit: no styling hook, still works
+        return st.container()
+
+
+if page == "Pick Team":
+    st.subheader(f"Pick team · GW{selected_gw}")
+    if full_df is None or not len(full_df):
+        st.info("Forecasts aren't ready yet.")
+    else:
+        fd_ = full_df
+        ss_ = st.session_state
+        lg_pt = load_league(int(league_id))
+        my_sq = [int(i_) for i_ in squad_for(lg_pt, my_entry_sel, selected_gw, next_gw) if i_ in fd_.index] if my_entry_sel is not None else []
+        owned_pt = set(lg_pt["owner"]) | set(taken_ids or [])
+        if ss_.get("pt_metric") not in PT_METRIC:
+            ss_["pt_metric"] = "AER (expected points)"
+        mcol = PT_METRIC.get(ss_["pt_metric"], "AER1")
+        mcol = mcol if mcol in fd_.columns else "AER1"
+
+        def _et(i_):
+            return int(fd_.at[i_, "element_type"])
+
+        def _val(i_):
+            v_ = fd_.at[i_, mcol] if i_ in fd_.index else np.nan
+            return float(v_) if pd.notna(v_) else -1e9
+
+        def _xi_ok(xi_):
+            if len(xi_) != 11:
+                return False
+            c_ = {e_: sum(_et(i_) == e_ for i_ in xi_) for e_ in (1, 2, 3, 4)}
+            return all(lo_ <= c_[e_] <= hi_ for e_, (lo_, hi_) in PT_XI.items())
+
+        def _pt_best_xi():
+            sq_ = [i_ for i_ in ss_.get("pt_squad", []) if i_ in fd_.index]
+            ss_["pt_sel"] = None
+            if len(sq_) >= 11:
+                xi_, bench_, form_ = best_lineup(fd_.loc[sq_].assign(_m=[_val(i_) for i_ in sq_]), "_m")
+                if form_ != "incomplete squad":
+                    ss_["pt_xi"], ss_["pt_bench"] = [int(i_) for i_ in xi_.index], [int(i_) for i_ in bench_.index]
+                    return
+            ss_["pt_xi"], ss_["pt_bench"] = [], sq_
+
+        def _pt_set_squad(ids_):
+            sq_, cnt_ = [], {1: 0, 2: 0, 3: 0, 4: 0}
+            for i_ in dict.fromkeys(int(x_) for x_ in ids_):
+                if i_ in fd_.index and cnt_[_et(i_)] < PT_LIMIT[_et(i_)]:
+                    sq_.append(i_)
+                    cnt_[_et(i_)] += 1
+            ss_["pt_squad"] = sq_
+            _pt_best_xi()
+
+        def _pt_best_squad():
+            pool_ = [i_ for i_ in fd_.index if (i_ not in owned_pt or i_ in my_sq) and fd_.at[i_, "n_fix"] > 0]
+            best_ = []
+            for e_ in (1, 2, 3, 4):
+                best_ += sorted([i_ for i_ in pool_ if _et(i_) == e_], key=_val, reverse=True)[:PT_LIMIT[e_]]
+            _pt_set_squad(best_)
+
+        def _pt_switch_result(a_, b_):
+            xi_, bench_ = list(ss_["pt_xi"]), list(ss_["pt_bench"])
+            if (a_ in xi_) != (b_ in xi_):                                  # starter <-> substitute
+                s_, n_ = (a_, b_) if a_ in xi_ else (b_, a_)
+                new_xi = [n_ if i_ == s_ else i_ for i_ in xi_]
+                return (new_xi, [s_ if i_ == n_ else i_ for i_ in bench_]) if _xi_ok(new_xi) else None
+            if a_ in bench_ and b_ in bench_ and _et(a_) != 1 and _et(b_) != 1:   # reorder the outfield bench
+                ia_, ib_ = bench_.index(a_), bench_.index(b_)
+                bench_[ia_], bench_[ib_] = bench_[ib_], bench_[ia_]
+                return xi_, bench_
+            return None
+
+        def _pt_tap(pid_):
+            sel_ = ss_.get("pt_sel")
+            if sel_ is None or sel_ not in ss_["pt_squad"]:
+                ss_["pt_sel"] = pid_
+            elif sel_ == pid_:
+                ss_["pt_sel"] = None
+            else:
+                res_ = _pt_switch_result(sel_, pid_)
+                if res_:
+                    ss_["pt_xi"], ss_["pt_bench"] = res_
+                    ss_["pt_sel"] = None
+                else:
+                    ss_["pt_sel"] = pid_
+
+        def _pt_transfer(out_, in_):
+            ss_["pt_squad"] = [in_ if i_ == out_ else i_ for i_ in ss_["pt_squad"]]
+            ss_["pt_xi"] = [in_ if i_ == out_ else i_ for i_ in ss_["pt_xi"]]
+            ss_["pt_bench"] = [in_ if i_ == out_ else i_ for i_ in ss_["pt_bench"]]
+            ss_["pt_sel"] = None
+
+        # keep the saved team consistent with the current data (players can leave the game, data refreshes)
+        sq_now = [int(i_) for i_ in dict.fromkeys(ss_.get("pt_squad", [])) if i_ in fd_.index]
+        if not sq_now and my_sq:
+            _pt_set_squad(my_sq)
+        elif sq_now != ss_.get("pt_squad"):
+            _pt_set_squad(sq_now)
+        xi_now = [i_ for i_ in ss_.get("pt_xi", []) if i_ in ss_["pt_squad"]]
+        bench_now = [i_ for i_ in ss_.get("pt_bench", []) if i_ in ss_["pt_squad"] and i_ not in xi_now]
+        bench_now += [i_ for i_ in ss_["pt_squad"] if i_ not in xi_now and i_ not in bench_now]
+        bench_now = [i_ for i_ in bench_now if _et(i_) == 1] + [i_ for i_ in bench_now if _et(i_) != 1]   # keeper first, as in FPL
+        ss_["pt_xi"], ss_["pt_bench"] = xi_now, bench_now
+        if not _xi_ok(xi_now) and len(ss_["pt_squad"]) >= 11:
+            _pt_best_xi()
+        if ss_.get("pt_metric_last") != ss_["pt_metric"]:        # a new rating re-picks the XI by that rating
+            ss_["pt_metric_last"] = ss_["pt_metric"]
+            _pt_best_xi()
+
+        t1_, t2_, t3_, t4_ = st.columns([2.2, 1, 1, 1])
+        t1_.selectbox("Rate players by", list(PT_METRIC), key="pt_metric",
+                      help="Card numbers show this rating, and the XI is re-picked by it. Projected points always count expected points.")
+        t2_.button("My squad", on_click=_pt_set_squad, args=(my_sq,), disabled=not my_sq, use_container_width=True,
+                   help="Reload your real squad and pick its best XI.")
+        t3_.button("Best XI", on_click=_pt_best_xi, use_container_width=True, help="Pick the highest-rated legal XI from this squad.")
+        t4_.button("Best squad", on_click=_pt_best_squad, use_container_width=True,
+                   help="Build the highest-rated legal 15 (2 GK, 5 DEF, 5 MID, 3 FWD) from your squad plus free agents.")
+
+        xi_ids, bench_ids = ss_["pt_xi"], ss_["pt_bench"]
+        if len(ss_["pt_squad"]) < 15:
+            st.warning(f"Your squad has {len(ss_['pt_squad'])} players. Press **Best squad** or use Transfers below to fill it.")
+        if xi_ids:
+            xi_df, bench_df = fd_.loc[xi_ids], fd_.loc[bench_ids]
+            base_p, sub_p, sd_p = team_projection(xi_df, bench_df)
+            m1_, m2_, m3_, m4_ = st.columns(4)
+            m1_.metric("Projected points", f"{base_p + sub_p:.1f}", f"XI {base_p:.1f} + bench {sub_p:.1f}", delta_color="off")
+            m2_.metric("Formation", "-".join(str(sum(_et(i_) == e_ for i_ in xi_ids)) for e_ in (2, 3, 4)))
+            _mu = {"AER1": "pts", "Theta": "pts vs repl.", "HaulPts": "pts", "DPS": "index", "GreenScore": "0–100"}.get(mcol, "")
+            m3_.metric(f"Team {ss_['pt_metric'].split(' (')[0]} ({_mu})", f"{sum(max(_val(i_), 0) for i_ in xi_ids):.1f}")
+            th_ = globals().get("theirs")
+            if isinstance(th_, dict):
+                sdd_ = float(np.sqrt(sd_p ** 2 + th_["sd"] ** 2)) or 1.0
+                m4_.metric(f"Win chance vs {th_['name']}", f"{_phi((base_p + sub_p - th_['total']) / sdd_) * 100:.0f}%",
+                           f"{base_p + sub_p - th_['total']:+.1f} pts", delta_color="off")
+        sel_ = ss_.get("pt_sel")
+        if sel_ is not None and sel_ in fd_.index:
+            st.info(f"**{fd_.at[sel_, 'web_name']}** selected: press **Switch** under the player to swap with, or **Cancel**.")
+            st.markdown(big_card_html(sel_, fd_, ctx["h"], fx, selected_gw, code), unsafe_allow_html=True)
+        else:
+            st.caption("Press **Select** under a player, then **Switch** under who to swap him with. Only legal formations are offered.")
+
+        def _card_btn(pid_, col_):
+            r_ = fd_.loc[pid_]
+            col_.markdown(_card(r_, "AER1"), unsafe_allow_html=True)
+            if sel_ is None:
+                lab_, kind_, dis_ = "Select", "secondary", False
+            elif sel_ == pid_:
+                lab_, kind_, dis_ = "Cancel", "primary", False
+            else:
+                ok_ = _pt_switch_result(sel_, pid_) is not None
+                lab_, kind_, dis_ = ("Switch", "primary", False) if ok_ else ("–", "secondary", True)
+            col_.button(lab_, key=f"pt_btn_{pid_}", on_click=_pt_tap, args=(pid_,), type=kind_, disabled=dis_, use_container_width=True)
+
+        def _row(ids_, slots_=5):
+            if not ids_:
+                return
+            pad_ = max(slots_ - len(ids_), 0) / 2 + 0.01
+            cols_ = st.columns([pad_] + [1] * len(ids_) + [pad_])
+            for k_, pid_ in enumerate(ids_):
+                _card_btn(pid_, cols_[k_ + 1])
+
+        with _keyed_container("pt_pitch"):
+            for e_ in (1, 2, 3, 4):
+                _row(sorted([i_ for i_ in xi_ids if _et(i_) == e_], key=_val, reverse=True))
+        with _keyed_container("pt_bench"):
+            st.caption("Substitutes · GK, then 1st, 2nd, 3rd sub")
+            _row(bench_ids, 5)
+        st.caption("FPL Draft doesn't let other apps change your real lineup, so copy this into the FPL Draft app before the deadline.")
+
+        st.markdown("#### Transfers")
+        if ss_["pt_squad"]:
+            o1_, o2_ = st.columns([2, 3])
+            out_pick = o1_.selectbox("Player out", ss_["pt_squad"], key="pt_out",
+                                     format_func=lambda i_: f"{fd_.at[i_, 'web_name']} ({fd_.at[i_, 'team_code']}, {fd_.at[i_, 'position']})")
+            pool_mode = o2_.radio("Look at", ["Free agents", "All players"], key="pt_pool", horizontal=True)
+            e_o = _et(out_pick)
+            cands = [i_ for i_ in fd_.index if _et(i_) == e_o and i_ not in ss_["pt_squad"] and fd_.at[i_, "n_fix"] > 0
+                     and (pool_mode == "All players" or i_ not in owned_pt)]
+            cands = sorted(cands, key=_val, reverse=True)[:10]
+            if not cands:
+                st.info("No available players at that position.")
+            for c_ in cands:
+                r_ = fd_.loc[c_]
+                cc1, cc2 = st.columns([5, 1])
+                cc1.markdown(f"**{r_['web_name']}** · {r_['team_code']} · {r_['Opponent']} — {ss_['pt_metric'].split(' (')[0]} **{_val(c_):.2f}** · "
+                             f"AER {r_['AER1']:.2f}" + (f" · WPA {r_['WPA'] * 100:+.1f}%" if pd.notna(r_.get("WPA")) else ""))
+                cc2.button("Bring in", key=f"pt_in_{c_}", on_click=_pt_transfer, args=(int(out_pick), int(c_)), use_container_width=True)
+
+
+# =========================================================
+# LEAGUE — head-to-head table, this gameweek's fixtures and your results
+# =========================================================
+if page == "League":
+    lg_l = load_league(int(league_id))
+    ents_l, mt_l = lg_l["entries"], lg_l["matches"]
+    st.subheader("League")
+    if ents_l.empty or mt_l.empty or not {"league_entry_1", "league_entry_2"} <= set(mt_l.columns):
+        st.info("No head-to-head data for this league (it may use classic scoring).")
+    else:
+        nm_l = dict(zip(ents_l["id"].astype(int), ents_l["entry_name"]))
+        mg_l = {int(r_["id"]): f"{r_.get('player_first_name', '')} {r_.get('player_last_name', '')}".strip() for _, r_ in ents_l.iterrows()}
+        fin_l = mt_l[mt_l["finished"].astype(bool)] if "finished" in mt_l.columns else mt_l.iloc[0:0]
+        rows_l = []
+        for le_ in nm_l:
+            a_ = fin_l[fin_l["league_entry_1"] == le_]
+            b_ = fin_l[fin_l["league_entry_2"] == le_]
+            pf_ = list(a_["league_entry_1_points"]) + list(b_["league_entry_2_points"])
+            pa_ = list(a_["league_entry_2_points"]) + list(b_["league_entry_1_points"])
+            w_ = sum(x_ > y_ for x_, y_ in zip(pf_, pa_))
+            d_ = sum(x_ == y_ for x_, y_ in zip(pf_, pa_))
+            rows_l.append({"Team": nm_l[le_], "Manager": mg_l.get(le_, ""), "P": len(pf_), "W": w_, "D": d_, "L": len(pf_) - w_ - d_,
+                           "PF": int(sum(pf_)), "PA": int(sum(pa_)), "Pts": 3 * w_ + d_, "_me": le_ == my_entry_sel})
+        tab_l = pd.DataFrame(rows_l).sort_values(["Pts", "PF"], ascending=False).reset_index(drop=True)
+        tab_l.insert(0, "#", np.arange(1, len(tab_l) + 1))
+        me_rows = tab_l["_me"].to_numpy()
+        st.dataframe(tab_l.drop(columns="_me").style.apply(
+            lambda r_: ["background-color: rgba(150,60,255,.22); font-weight: 700" if me_rows[r_.name] else "" for _ in r_], axis=1),
+            use_container_width=True, hide_index=True)
+        gw_m = mt_l[mt_l["event"] == selected_gw]
+        st.markdown(f"**Gameweek {selected_gw} fixtures**")
+        for _, r_ in gw_m.iterrows():
+            h_, a_ = nm_l.get(int(r_["league_entry_1"]), "?"), nm_l.get(int(r_["league_entry_2"]), "?")
+            score_ = (f"{int(r_['league_entry_1_points'])} – {int(r_['league_entry_2_points'])}" if bool(r_.get("finished", False)) else "v")
+            mine_ = my_entry_sel in (int(r_["league_entry_1"]), int(r_["league_entry_2"]))
+            st.markdown(f"{'**' if mine_ else ''}{h_}  {score_}  {a_}{'**' if mine_ else ''}")
+        if my_entry_sel is not None and len(fin_l):
+            mine_l = fin_l[(fin_l["league_entry_1"] == my_entry_sel) | (fin_l["league_entry_2"] == my_entry_sel)].sort_values("event", ascending=False)
+            res_ = []
+            for _, r_ in mine_l.iterrows():
+                me1_ = int(r_["league_entry_1"]) == my_entry_sel
+                mp_, op_ = (r_["league_entry_1_points"], r_["league_entry_2_points"]) if me1_ else (r_["league_entry_2_points"], r_["league_entry_1_points"])
+                res_.append({"GW": int(r_["event"]), "Opponent": nm_l.get(int(r_["league_entry_2"] if me1_ else r_["league_entry_1"]), "?"),
+                             "Score": f"{int(mp_)} – {int(op_)}", "Result": "W" if mp_ > op_ else ("D" if mp_ == op_ else "L")})
+            st.markdown("**Your results**")
+            st.dataframe(pd.DataFrame(res_), use_container_width=True, hide_index=True)
+
 # =========================================================
 # PLAYER TRENDS — weekly evolution and season profile for selected players
 # =========================================================
@@ -4060,6 +5484,19 @@ def _chart(data, x, y, color, height=240):
 
 
 if page == "Players":
+    st.subheader("Player cards")
+    if full_df is not None and len(full_df):
+        _pc_opts = full_df.sort_values("AER1", ascending=False).index.tolist()
+        st.session_state.setdefault("tr_cards", _pc_opts[:2])
+        _pc_sel = st.multiselect("Players", _pc_opts, key="tr_cards", max_selections=3,
+                                 format_func=lambda i_: f"{full_df.at[i_, 'web_name']} ({full_df.at[i_, 'team_code']}, {full_df.at[i_, 'position']})")
+        if _pc_sel:
+            _pcc = st.columns(len(_pc_sel))
+            for _k, _pid in enumerate(_pc_sel):
+                _pcc[_k].markdown(big_card_html(_pid, full_df, ctx["h"], fx, selected_gw, code), unsafe_allow_html=True)
+            st.caption("Top: last three gameweeks' points, then the next three fixtures (green = easy, red = hard). Purple: season totals. "
+                       "Bottom: this gameweek's forecast. AER = expected points; Starts = chance of playing 60+ minutes; Haul chance = chance of a "
+                       "top-20% week for his position; Points if he hauls = what he typically scores in those weeks.")
     st.subheader("Player trends")
     h_all = ctx["h"]
     fin_gws = sorted(int(g_) for g_ in ctx["fin"]["event"].unique())
@@ -4676,20 +6113,1120 @@ if page == "Live cams":
 # =========================================================
 # MATCHUPS & ODDS
 # =========================================================
+
+# =========================================================
+# SHOT MAPS — where a player shoots from vs where his opponent concedes shots (Understat, free)
+# =========================================================
+US_BASE = "https://understat.com"
+US_RESULT = {"Goal": "Goal", "SavedShot": "Saved", "MissedShots": "Missed", "BlockedShot": "Blocked", "ShotOnPost": "Post", "OwnGoal": "Own goal"}
+
+
+def understat_season():
+    t = pd.Timestamp.today()
+    return str(t.year if t.month >= 7 else t.year - 1)
+
+
+def _us_get(path, api=False):
+    h_ = {"User-Agent": "Mozilla/5.0 (fpl-hog-statistician; personal use)"}
+    if api:
+        h_.update({"X-Requested-With": "XMLHttpRequest", "Referer": US_BASE + "/"})
+    r = requests.get(US_BASE + path, headers=h_, timeout=20)
+    r.raise_for_status()
+    return r
+
+
+def _us_var(html_text, var):
+    """Data Understat embeds in its pages as  var NAME = JSON.parse('...escaped...')."""
+    m = re.search(var + r"\s*=\s*JSON\.parse\('(.*?)'\)", html_text, re.S)
+    if not m:
+        return None
+    return json.loads(m.group(1).encode("utf-8").decode("unicode_escape"))
+
+
+@st.cache_data(ttl=6 * 3600, show_spinner=False)
+def us_league_matches(season):
+    """Every Premier League match this season with Understat's match id (fixture list endpoint, falling back to the league page)."""
+    dates = None
+    try:
+        dates = _us_get(f"/getLeagueData/EPL/{season}", api=True).json().get("dates")
+    except Exception:
+        dates = None
+    if not dates:
+        dates = _us_var(_us_get(f"/league/EPL/{season}").text, "datesData")
+    rows = [{"id": int(d_["id"]), "played": bool(d_.get("isResult")), "home": d_["h"]["title"], "away": d_["a"]["title"],
+             "when": pd.to_datetime(d_.get("datetime"), errors="coerce")} for d_ in (dates or [])]
+    return pd.DataFrame(rows)
+
+
+@st.cache_data(persist="disk", max_entries=800, show_spinner=False)
+def us_match_shots(match_id):
+    """All shots in one finished match (they never change, so they are kept on disk)."""
+    data = None
+    try:
+        data = _us_var(_us_get(f"/match/{int(match_id)}").text, "shotsData")
+    except Exception:
+        data = None
+    if not data:
+        try:
+            js = _us_get(f"/getMatchData/{int(match_id)}", api=True).json()
+            data = js.get("shots") or js.get("shotsData")
+        except Exception:
+            data = None
+    if not data:
+        return pd.DataFrame()
+    rows = []
+    for side_ in ("h", "a"):
+        for s_ in data.get(side_, []) or []:
+            rows.append({"match": int(match_id), "side": side_, "team": s_.get("h_team") if side_ == "h" else s_.get("a_team"),
+                         "opp": s_.get("a_team") if side_ == "h" else s_.get("h_team"), "player": s_.get("player"),
+                         "X": float(s_.get("X", 0)), "Y": float(s_.get("Y", 0)), "xG": float(s_.get("xG", 0)),
+                         "result": US_RESULT.get(s_.get("result"), s_.get("result")), "situation": s_.get("situation"),
+                         "minute": int(float(s_.get("minute", 0) or 0))})
+    return pd.DataFrame(rows)
+
+
+def us_team_title(team_id, matches):
+    """Understat's name for an FPL team (matched with the same fuzzy team matcher used for bookmaker odds)."""
+    for t_ in sorted(set(matches["home"]) | set(matches["away"])):
+        if match_team(t_, teams) == int(team_id):
+            return t_
+    return None
+
+
+def us_team_shots(title, matches, last_n):
+    """Shots by and against a team in its last `last_n` finished matches."""
+    m_ = matches[matches["played"] & ((matches["home"] == title) | (matches["away"] == title))].sort_values("when").tail(last_n)
+    if m_.empty:
+        return pd.DataFrame(), 0
+    with ThreadPoolExecutor(max_workers=6) as ex:
+        parts = [p_ for p_ in ex.map(us_match_shots, m_["id"].tolist()) if len(p_)]
+    if not parts:
+        return pd.DataFrame(), 0
+    d_ = pd.concat(parts, ignore_index=True)
+    return d_[(d_["team"] == title) | (d_["opp"] == title)], len(m_)
+
+
+US_COL = {"Goal": "#00C46A", "Saved": "#2F80ED", "Post": "#9B51E0", "Blocked": "#F2994A", "Missed": "#BDBDBD", "Own goal": "#111111"}
+
+
+def shot_zone(d_):
+    """6 x 6 grid over the attacking half: across the pitch (6) by distance from goal in 8.75 m bands (6)."""
+    return (np.floor(d_["Y"] * 6).clip(0, 5).astype(int).astype(str) + "-" + np.floor((1 - d_["X"]) * 12).clip(0, 5).astype(int).astype(str))
+
+
+def zone_weakness(con, base):
+    """Per zone: the share of a team's conceded xG that comes from it, divided by the share typical teams concede there (`base` = every
+    shot in the matches loaded). Above 1 = they concede more there than usual. Shares, not totals, so it isn't just 'the six-yard box'."""
+    if con is None or not len(con) or base is None or not len(base):
+        return pd.Series(dtype=float)
+    c_ = con.assign(z=shot_zone(con)).groupby("z")["xG"].sum()
+    b_ = base.assign(z=shot_zone(base)).groupby("z")["xG"].sum()
+    cs, bs = c_ / max(c_.sum(), 1e-9), b_ / max(b_.sum(), 1e-9)
+    k_ = 0.02                                           # small-sample guard: zones with little baseline xG can't look extreme
+    return ((cs + k_ * bs.mean()) / (bs + k_ * bs.mean())).reindex(bs.index).fillna(0.0)
+
+
+def shot_map_svg(att, con, att_label, con_label, n_con, base=None):
+    """Attacking half of a pitch drawn directly as SVG (goal at the top): red zones = where `con_label` concede xG per match (6 x 6 zones),
+    dots = `att_label` shots (area ~ xG, colour = outcome). Understat gives every shot from the shooting team's view, so both line up."""
+    W, H = 68.0, 52.5
+    parts = [f"<rect x='0' y='0' width='{W}' height='{H}' fill='#e8f5ec'/>"]
+    weak_ = zone_weakness(con, base) if base is not None else pd.Series(dtype=float)
+    if len(weak_):
+        for z_, r_ in weak_.items():
+            if r_ <= 1.0:
+                continue
+            i_, j_ = (int(x_) for x_ in z_.split("-"))
+            parts.append(f"<rect x='{i_ * W / 6:.2f}' y='{j_ * 8.75:.2f}' width='{W / 6:.2f}' height='8.75' fill='#E90052' "
+                         f"fill-opacity='{min(0.12 + 0.5 * (r_ - 1), 0.62):.2f}'><title>{_html.escape(con_label)} concede {r_:.1f}× the usual share "
+                         f"of their xG here</title></rect>")
+    elif con is not None and len(con) and n_con:
+        c_ = con.assign(px=con["Y"] * W, py=(1 - con["X"]) * 105.0)
+        c_ = c_[c_["py"] <= H]
+        bx, by = np.floor(c_["px"] / (W / 6)).clip(0, 5), np.floor(c_["py"] / (H / 6)).clip(0, 5)
+        z_ = c_.assign(bx=bx, by=by).groupby(["bx", "by"])["xG"].sum() / n_con
+        zmax = float(z_.max()) if len(z_) else 1.0
+        for (i_, j_), v_ in z_.items():
+            parts.append(f"<rect x='{i_ * W / 6:.2f}' y='{j_ * H / 6:.2f}' width='{W / 6:.2f}' height='{H / 6:.2f}' fill='#E90052' "
+                         f"fill-opacity='{0.08 + 0.62 * v_ / max(zmax, 1e-9):.2f}'><title>{v_:.2f} xG conceded per match</title></rect>")
+    ln = "fill='none' stroke='#2d6a3e' stroke-width='0.35'"
+    parts += [f"<rect x='0' y='0' width='{W}' height='{H}' {ln}/>", f"<rect x='{(W - 40.32) / 2}' y='0' width='40.32' height='16.5' {ln}/>",
+              f"<rect x='{(W - 18.32) / 2}' y='0' width='18.32' height='5.5' {ln}/>",
+              f"<line x1='{(W - 7.32) / 2}' y1='0' x2='{(W + 7.32) / 2}' y2='0' stroke='#2d6a3e' stroke-width='1.2'/>",
+              f"<circle cx='{W / 2}' cy='11' r='0.35' fill='#2d6a3e'/>",
+              f"<path d='M {W / 2 - 7.3} 16.5 A 9.15 9.15 0 0 0 {W / 2 + 7.3} 16.5' {ln}/>",
+              f"<path d='M {W / 2 - 9.15} {H} A 9.15 9.15 0 0 1 {W / 2 + 9.15} {H}' {ln}/>"]
+    if att is not None and len(att):
+        a_ = att.assign(px=att["Y"] * W, py=(1 - att["X"]) * 105.0)
+        a_ = a_[a_["py"] <= H].assign(_g=lambda d: (d["result"] == "Goal").astype(int)).sort_values(["_g", "xG"], ascending=[True, False])
+        for _, r_ in a_.iterrows():
+            rad = 0.45 + 1.9 * np.sqrt(max(float(r_["xG"]), 0.0))
+            parts.append(f"<circle cx='{r_['px']:.2f}' cy='{r_['py']:.2f}' r='{rad:.2f}' fill='{US_COL.get(r_['result'], '#999')}' fill-opacity='0.72' "
+                         f"stroke='#37003C' stroke-width='0.25'><title>{_html.escape(str(r_['player']))} · {r_['minute']}' · {r_['result']} · "
+                         f"{float(r_['xG']):.2f} xG</title></circle>")
+    legend = " ".join(f"<span style='display:inline-flex;align-items:center;gap:4px;margin-right:10px'><span style='width:10px;height:10px;"
+                      f"border-radius:50%;background:{c_}'></span>{k_}</span>" for k_, c_ in US_COL.items() if k_ != "Own goal")
+    heat = (f"<span style='display:inline-flex;align-items:center;gap:4px'><span style='width:12px;height:10px;background:#E90052;opacity:.55'>"
+            f"</span>{_html.escape(con_label)} concede {'more than usual' if base is not None else ''}</span>" if con is not None and len(con) else "")
+    return (f"<div style='max-width:520px;margin:0 auto'><svg viewBox='-1 -2 {W + 2} {H + 3}' style='width:100%;border-radius:10px'>{''.join(parts)}</svg>"
+            f"<div style='font-size:11px;margin-top:4px;text-align:center'>{legend}{heat}<br>Bigger dot = better chance (higher xG). "
+            f"Hover for details.</div></div>")
+
+
+def xg_race_data(shots, hc, ac):
+    """Cumulative expected goals by minute for each side, as a step line (Streamlit's own chart), plus the list of goals."""
+    rows, goals = [], []
+    for side_, lab_ in (("h", hc), ("a", ac)):
+        s_ = shots[shots["side"] == side_].sort_values("minute")
+        cum = 0.0
+        rows.append({"minute": 0.0, "team": lab_, "xG": 0.0})
+        for _, r_ in s_.iterrows():
+            m_ = float(r_["minute"])
+            rows.append({"minute": m_, "team": lab_, "xG": cum})
+            cum += float(r_["xG"])
+            rows.append({"minute": m_ + 0.01, "team": lab_, "xG": cum})
+            if r_["result"] == "Goal":
+                goals.append(f"{lab_} {int(m_)}' {r_['player']}")
+        rows.append({"minute": max(95.0, float(shots["minute"].max()) + 1 if len(shots) else 95.0), "team": lab_, "xG": cum})
+    d_ = pd.DataFrame(rows).astype({"minute": float, "xG": float, "team": str})
+    return d_.pivot_table(index="minute", columns="team", values="xG", aggfunc="last").sort_index().ffill().fillna(0.0), goals
+
+
+def shot_map_chart(att, con, att_label, con_label, n_con):
+    """Attacking half of a pitch (goal at the top): the opponent's shots-conceded zones as a heat layer (xG conceded per match per zone),
+    the chosen player's shots on top (size = xG, colour = outcome). Understat gives every shot from the shooting team's view, so the two line up."""
+    import altair as alt
+    L, W = 105.0, 68.0
+    lines = [(0, 52.5, W, 52.5), (0, 105, W, 105), (0, 52.5, 0, 105), (W, 52.5, W, 105),
+             (13.84, 88.5, 54.16, 88.5), (13.84, 88.5, 13.84, 105), (54.16, 88.5, 54.16, 105),
+             (24.84, 99.5, 43.16, 99.5), (24.84, 99.5, 24.84, 105), (43.16, 99.5, 43.16, 105)]
+    th_ = np.linspace(np.radians(217), np.radians(323), 30)                     # the D at the top of the box
+    arc = pd.DataFrame({"x": 34 + 9.15 * np.cos(th_), "y": 94 + 9.15 * np.sin(th_)})
+    arc = arc[arc["y"] <= 88.5]
+    th2 = np.linspace(np.pi, 2 * np.pi, 40)                                     # centre-circle half
+    circ = pd.DataFrame({"x": 34 + 9.15 * np.cos(th2), "y": 52.5 - 9.15 * np.sin(th2)})
+    seg = pd.DataFrame([{"x": a_, "y": b_, "x2": c_, "y2": d_} for a_, b_, c_, d_ in lines])
+    xs = alt.Scale(domain=[0, W], nice=False)
+    ys = alt.Scale(domain=[52.5, L], nice=False)
+    layers = []
+    if con is not None and len(con) and n_con:
+        c_ = con.assign(px=con["Y"] * W, py=con["X"] * L)
+        c_ = c_[c_["py"] >= 52.5]
+        c_["bx"] = (np.floor(c_["px"] / (W / 6)) * (W / 6)).clip(0, W - W / 6)
+        c_["by"] = (np.floor((c_["py"] - 52.5) / (52.5 / 6)) * (52.5 / 6) + 52.5).clip(52.5, L - 52.5 / 6)
+        z_ = c_.groupby(["bx", "by"], as_index=False)["xG"].sum()
+        z_["xG per match"] = z_["xG"] / n_con
+        z_["bx2"], z_["by2"] = z_["bx"] + W / 6, z_["by"] + 52.5 / 6
+        layers.append(alt.Chart(z_).mark_rect(opacity=0.75).encode(
+            x=alt.X("bx:Q", scale=xs, axis=None), x2="bx2:Q", y=alt.Y("by:Q", scale=ys, axis=None), y2="by2:Q",
+            color=alt.Color("xG per match:Q", scale=alt.Scale(scheme="reds"), title=f"xG {con_label} concede / match"),
+            tooltip=[alt.Tooltip("xG per match:Q", format=".2f")]))
+    layers.append(alt.Chart(seg).mark_rule(color="#2d6a3e", strokeWidth=1.5).encode(x=alt.X("x:Q", scale=xs, axis=None), y=alt.Y("y:Q", scale=ys, axis=None),
+                                                                                    x2="x2:Q", y2="y2:Q"))
+    for d_ in (arc, circ):
+        layers.append(alt.Chart(d_).mark_line(color="#2d6a3e", strokeWidth=1.5).encode(x=alt.X("x:Q", scale=xs, axis=None), y=alt.Y("y:Q", scale=ys, axis=None), order="x:Q"))
+    if att is not None and len(att):
+        a_ = att.assign(px=att["Y"] * W, py=att["X"] * L)
+        a_ = a_[a_["py"] >= 52.5]
+        layers.append(alt.Chart(a_).mark_circle(opacity=0.9, stroke="#37003C", strokeWidth=1).encode(
+            x=alt.X("px:Q", scale=xs, axis=None), y=alt.Y("py:Q", scale=ys, axis=None),
+            size=alt.Size("xG:Q", scale=alt.Scale(range=[30, 600], domain=[0, 0.8]), title="Shot xG"),
+            color=alt.Color("result:N", scale=alt.Scale(domain=["Goal", "Saved", "Post", "Blocked", "Missed", "Own goal"],
+                                                        range=["#00C46A", "#2F80ED", "#9B51E0", "#F2994A", "#BDBDBD", "#000000"]),
+                            title=f"{att_label} shot"),
+            tooltip=["player:N", "result:N", "situation:N", "minute:Q", alt.Tooltip("xG:Q", format=".2f")]))
+    return alt.layer(*layers).properties(height=430, background="#e8f5ec").configure_view(stroke=None)
+
+
+
+def _mm_cell(v):
+    """Matchup cell: +30% = this opponent concedes 30% more than an average team to that position."""
+    if pd.isna(v):
+        return "<td>–</td>"
+    d = (v - 1) * 100
+    bg = "#0b6e3a" if d >= 20 else "#7cc24a" if d >= 7 else "#e9e9ef" if d > -7 else "#ee7d2a" if d > -20 else "#c23b2a"
+    fg = "#fff" if bg in ("#0b6e3a", "#c23b2a") else "#1f1a2e"
+    txt_ = "0%" if round(d) == 0 else f"{round(d):+.0f}%"
+    return f"<td style='background:{bg};color:{fg};font-weight:700'>{txt_}</td>"
+
+
+MP_CSS = """<style>
+.mp{border-radius:14px;background:#fff;color:#37003C;box-shadow:0 3px 12px rgba(0,0,0,.15);padding:10px 12px;margin-bottom:12px;font-family:-apple-system,system-ui,sans-serif}
+.mp-teams{display:flex;align-items:center;justify-content:space-between;gap:6px}
+.mp-team{width:30%;text-align:center;font-weight:800;font-size:15px}.mp-team svg{width:40px;height:40px;display:block;margin:0 auto}
+.mp-score{text-align:center;font-weight:900;font-size:26px;line-height:1}.mp-score small{display:block;font-size:10px;font-weight:600;opacity:.7}
+.mp-xg{text-align:center;font-size:11.5px;margin:4px 0 6px;opacity:.85}
+.mp-bar{display:flex;height:22px;border-radius:6px;overflow:hidden;font-size:11px;font-weight:800}
+.mp-bar span{display:flex;align-items:center;justify-content:center;white-space:nowrap;overflow:hidden}
+.mp-stats{display:flex;flex-wrap:wrap;gap:4px 10px;justify-content:center;font-size:11px;margin-top:6px}
+.mp-stats b{font-weight:800}
+.mm{width:100%;border-collapse:separate;border-spacing:3px;font-family:-apple-system,system-ui,sans-serif;font-size:13px}
+.mm th{font-size:11px;font-weight:700;opacity:.8;text-align:center;padding:2px}.mm td{text-align:center;padding:6px 4px;border-radius:6px}
+.mm td.pos{font-weight:800;text-align:left;background:transparent}
+</style>"""
+
+
+
+# =========================================================
+# SIGNAL FINDER — which statistics (alone, in pairs, in small combinations) best predict the points actually scored
+# =========================================================
+SF_LABELS = {"aer": "AER (pts)", "dps": "DPS process points (pts)", "xPts": "Structural forecast (pts)", "xPts0": "Forecast before fitted effects (pts)",
+             "form": "Form (avg pts, last 4)", "ppg": "Points per game (season)", "pts_3": "Points per game (last 3)", "pts_6": "Points per game (last 6, decayed)",
+             "mins_3": "Minutes per game (last 3)", "mins_6": "Minutes per game (last 6)", "start_3": "Starts (last 3)", "start_6": "Starts (last 6)",
+             "p60": "Chance of 60+ minutes", "psub": "Chance of a sub appearance", "xMins": "Expected minutes", "p60_used": "Chance of 60+ (used)",
+             "xG": "Expected goals this GW", "xA": "Expected assists this GW", "g90": "Goals per 90 (xG-blended)", "a90": "Assists per 90 (xA-blended)",
+             "cs_team": "Clean-sheet chance", "xGC": "Goals against expected", "Fix": "Fixture attacking ease", "FDR": "FPL fixture difficulty",
+             "home": "Home", "n_fix": "Fixtures this GW", "stab_self": "Team stability", "stab_opp": "Opponent stability", "des_self": "Team stakes",
+             "des_opp": "Opponent stakes", "mm_idx": "Matchup (what the opponent leaks)", "role_f": "Finisher vs creator role", "perf70": "Points in 70+ min games",
+             "leader": "Leader score", "E90": "Season 90s played", "conf": "Sample size", "pts90": "Points per 90 (season)", "dc90": "DEFCON actions per 90",
+             "p_goal": "Expected goal points", "p_ast": "Expected assist points", "p_cs": "Expected clean-sheet points", "p_dc": "Expected DEFCON points",
+             "p_app": "Expected appearance points", "p_oth": "Expected other points (bonus, saves, cards)", "opp_att": "Opponent attack strength",
+             "opp_def": "Opponent defensive weakness", "team_def": "Own defence weakness", "lam_for": "Team expected goals", "elite_rate": "Past haul rate"}
+
+
+def sf_label(c):
+    if c in SF_LABELS:
+        return SF_LABELS[c]
+    stem, _, k = c.rpartition("_")
+    if k.isdigit() and stem:
+        return f"{stem.replace('_', ' ').capitalize()} per 90 (last {k})"
+    return c.replace("_", " ").capitalize()
+
+
+def _r2(y, yh):
+    y, yh = np.asarray(y, float), np.asarray(yh, float)
+    v = ((y - y.mean()) ** 2).sum()
+    return float(1 - ((y - yh) ** 2).sum() / v) if v > 0 else np.nan
+
+
+def _lin_fit(X, y, ridge=1e-3):
+    mu, sd = X.mean(0), X.std(0) + 1e-9
+    Z = np.column_stack([np.ones(len(X)), (X - mu) / sd])
+    w = np.linalg.solve(Z.T @ Z + ridge * np.diag([0] + [1] * X.shape[1]), Z.T @ y)
+    return lambda Xn: np.column_stack([np.ones(len(Xn)), (Xn - mu) / sd]) @ w
+
+
+def _bin_fit(x, y, nb=10, k=20.0):
+    """Shape fit: average outcome in each tenth of the stat, shrunk toward the overall mean (catches curves a straight line misses)."""
+    edges = np.unique(np.quantile(x, np.linspace(0, 1, nb + 1)[1:-1]))
+    b = np.searchsorted(edges, x)
+    g = y.mean()
+    s, n = np.bincount(b, y, len(edges) + 1), np.bincount(b, None, len(edges) + 1)
+    means = (s + k * g) / (n + k)
+    return lambda xn: means[np.searchsorted(edges, xn)]
+
+
+def _bin2_fit(x1, x2, y, nb=4, k=15.0):
+    e1 = np.unique(np.quantile(x1, np.linspace(0, 1, nb + 1)[1:-1]))
+    e2 = np.unique(np.quantile(x2, np.linspace(0, 1, nb + 1)[1:-1]))
+    n1, n2 = len(e1) + 1, len(e2) + 1
+    cell = np.searchsorted(e1, x1) * n2 + np.searchsorted(e2, x2)
+    g = y.mean()
+    s, n = np.bincount(cell, y, n1 * n2), np.bincount(cell, None, n1 * n2)
+    means = (s + k * g) / (n + k)
+    return lambda a, b: means[np.searchsorted(e1, a) * n2 + np.searchsorted(e2, b)]
+
+
+def _walk(df, cols, kind, gws):
+    """Out-of-sample predictions: each gameweek in `gws` is predicted by a fit on all earlier gameweeks only."""
+    preds, ys = [], []
+    for g in gws:
+        tr, te = df[df["GW"] < g], df[df["GW"] == g]
+        if len(tr) < 200 or not len(te):
+            continue
+        Xtr, Xte, y = tr[cols].to_numpy(float), te[cols].to_numpy(float), tr["actual"].to_numpy(float)
+        if kind == "linear":
+            f_ = _lin_fit(Xtr, y)
+            p_ = f_(Xte)
+        elif kind == "shape":
+            p_ = _bin_fit(Xtr[:, 0], y)(Xte[:, 0])
+        elif kind == "interaction":
+            add = lambda X: np.column_stack([X, X[:, 0] * X[:, 1]])
+            p_ = _lin_fit(add(Xtr), y)(add(Xte))
+        else:                                           # "grid": 4 x 4 cells
+            p_ = _bin2_fit(Xtr[:, 0], Xtr[:, 1], y)(Xte[:, 0], Xte[:, 1])
+        preds.append(p_)
+        ys.append(te["actual"].to_numpy(float))
+    if not preds:
+        return np.nan, np.array([]), np.array([])
+    yy, pp = np.concatenate(ys), np.concatenate(preds)
+    return _r2(yy, pp), yy, pp
+
+
+@st.cache_data(show_spinner="Searching every statistic, pair and combination (one-off, then cached)…", max_entries=6)
+def signal_finder(rows, holdout=3, top_single=20, max_combo=5):
+    """Discovery: every pre-gameweek statistic is scored by out-of-sample R² (each gameweek predicted from earlier ones only), as a straight
+    line and as a shape (tenths). The best 20 are paired (straight line with interaction, and a 4 x 4 grid). Forward selection then builds the
+    best small combination. Confirmation: the last `holdout` gameweeks are kept out of all of that, and the winners are re-scored on them."""
+    gws = sorted(rows["GW"].unique())
+    if len(gws) < holdout + 2:
+        return None
+    hold = gws[-holdout:]
+    disc_gws = [g for g in gws[:-holdout] if g > gws[0]]          # each needs at least one earlier gameweek to learn from
+    disc = rows[~rows["GW"].isin(hold)]
+    feats = [c for c in rows.columns if c not in ("actual", "GW", "id", "played") and rows[c].std() > 1e-9]
+    single = []
+    for c in feats:
+        r_lin, _, _ = _walk(disc, [c], "linear", disc_gws)
+        r_sh, _, _ = _walk(disc, [c], "shape", disc_gws)
+        single.append({"stat": c, "Straight-line R²": r_lin, "Shape R²": r_sh, "Best R²": np.nanmax([r_lin, r_sh]),
+                       "Correlation": float(np.corrcoef(disc[c], disc["actual"])[0, 1])})
+    single = pd.DataFrame(single).sort_values("Best R²", ascending=False).reset_index(drop=True)
+    top = single["stat"].head(top_single).tolist()
+    best1 = dict(zip(single["stat"], single["Best R²"]))
+    pairs = []
+    for i, a in enumerate(top):
+        for b in top[i + 1:]:
+            r_int, _, _ = _walk(disc, [a, b], "interaction", disc_gws)
+            r_grid, _, _ = _walk(disc, [a, b], "grid", disc_gws)
+            best_ = np.nanmax([r_int, r_grid])
+            pairs.append({"stat 1": a, "stat 2": b, "Line + interaction R²": r_int, "4×4 grid R²": r_grid, "Best R²": best_,
+                          "Gain over better single": best_ - max(best1.get(a, 0), best1.get(b, 0)),
+                          "method": "interaction" if (r_int >= r_grid or np.isnan(r_grid)) else "grid"})
+    pairs = pd.DataFrame(pairs).sort_values("Best R²", ascending=False).reset_index(drop=True)
+    # forward selection
+    cand = single["stat"].head(30).tolist()
+    chosen, path, cur = [], [], -np.inf
+    for _ in range(max_combo):
+        best_c, best_r = None, cur
+        for c in cand:
+            if c in chosen:
+                continue
+            r_, _, _ = _walk(disc, chosen + [c], "linear", disc_gws)
+            if r_ > best_r + 0.002:
+                best_c, best_r = c, r_
+        if best_c is None:
+            break
+        chosen.append(best_c)
+        cur = best_r
+        path.append({"step": len(chosen), "added": best_c, "Combination R²": best_r})
+    path = pd.DataFrame(path)
+    # confirmation on the held-out gameweeks (fits use every earlier gameweek, including discovery ones)
+
+    def conf(cols, kind):
+        r_, _, _ = _walk(rows, cols, kind, hold)
+        return r_
+    single["Confirmed R² (held-out GWs)"] = np.nan
+    for i_ in range(min(len(single), 15)):
+        c = single.at[i_, "stat"]
+        single.at[i_, "Confirmed R² (held-out GWs)"] = conf([c], "shape" if single.at[i_, "Shape R²"] > single.at[i_, "Straight-line R²"] else "linear")
+    pairs["Confirmed R² (held-out GWs)"] = np.nan
+    for i_ in range(min(len(pairs), 15)):
+        pairs.at[i_, "Confirmed R² (held-out GWs)"] = conf([pairs.at[i_, "stat 1"], pairs.at[i_, "stat 2"]], pairs.at[i_, "method"])
+    if len(path):
+        path["Confirmed R² (held-out GWs)"] = [conf(chosen[:k + 1], "linear") for k in range(len(chosen))]
+    combo_w = None
+    if chosen:
+        X_, y_ = rows[chosen].to_numpy(float), rows["actual"].to_numpy(float)
+        mu_, sd_ = X_.mean(0), X_.std(0) + 1e-9
+        Z_ = np.column_stack([np.ones(len(X_)), (X_ - mu_) / sd_])
+        w_ = np.linalg.lstsq(Z_, y_, rcond=None)[0]
+        combo_w = pd.DataFrame({"stat": chosen, "Weight per standard deviation (pts)": w_[1:], "Weight per unit": w_[1:] / sd_})
+    return {"single": single, "pairs": pairs, "path": path, "combo": combo_w, "n": len(rows), "n_hold": int(rows["GW"].isin(hold).sum()),
+            "hold": hold, "disc_gws": disc_gws}
+
+
+def grid_table(rows, a, b, nb=4):
+    """'If stat 1 is in this range and stat 2 in that range, players averaged X points' (all rows; counts shown)."""
+    qa = pd.qcut(rows[a].rank(method="first"), nb, labels=[f"Q{i + 1}" for i in range(nb)])
+    qb = pd.qcut(rows[b].rank(method="first"), nb, labels=[f"Q{i + 1}" for i in range(nb)])
+    g = rows.assign(qa=qa, qb=qb).groupby(["qa", "qb"], observed=True)["actual"].agg(["mean", "size"]).reset_index()
+    rng_a = rows.groupby(qa, observed=True)[a].agg(["min", "max"])
+    rng_b = rows.groupby(qb, observed=True)[b].agg(["min", "max"])
+    return g, rng_a, rng_b
+
+
+
+# =========================================================
+# MATCH ANALYZER — one fixture: what the model expected, what the chances said, what happened, and what it meant for FPL
+# =========================================================
+def xg_race_chart(shots, home_t, away_t, hc, ac):
+    import altair as alt
+    rows = []
+    for side_, tt_, lab_ in (("h", home_t, hc), ("a", away_t, ac)):
+        s_ = shots[shots["side"] == side_].sort_values("minute")
+        cum = 0.0
+        rows.append({"minute": 0, "xG": 0.0, "team": lab_, "goal": False})
+        for _, r_ in s_.iterrows():
+            cum += float(r_["xG"])
+            rows.append({"minute": int(r_["minute"]), "xG": cum, "team": lab_, "goal": r_["result"] == "Goal", "player": r_["player"]})
+        rows.append({"minute": 95, "xG": cum, "team": lab_, "goal": False})
+    d_ = pd.DataFrame(rows)
+    col = alt.Color("team:N", scale=alt.Scale(domain=[hc, ac], range=["#00C46A", "#963CFF"]), title=None)
+    line = alt.Chart(d_).mark_line(interpolate="step-after", strokeWidth=3).encode(
+        x=alt.X("minute:Q", title="Minute", scale=alt.Scale(domain=[0, 95])), y=alt.Y("xG:Q", title="Cumulative expected goals"), color=col)
+    goals = alt.Chart(d_[d_["goal"]]).mark_point(size=160, filled=True, shape="circle", stroke="#111", strokeWidth=1).encode(
+        x="minute:Q", y="xG:Q", color=col, tooltip=["player:N", "minute:Q"])
+    return alt.layer(line, goals).properties(height=260)
+
+
+def deserved_result(shots, n=20000, seed=0):
+    """Replays the match's chances n times (each shot scores with probability = its xG): how often each side wins on those chances."""
+    rng = np.random.default_rng(seed)
+    sh = shots[shots["result"] != "Own goal"]
+
+    def _goals(xg_):
+        xg_ = np.asarray(xg_, float)
+        return (rng.random((n, len(xg_))) < xg_).sum(1) if len(xg_) else np.zeros(n)
+
+    gh, ga = _goals(sh.loc[sh["side"] == "h", "xG"]), _goals(sh.loc[sh["side"] == "a", "xG"])
+    return float((gh > ga).mean()), float((gh == ga).mean()), float((gh < ga).mean())
+
+
+def sf_build_rows(pos="All positions", only_played=False):
+    """Every past player-gameweek with the statistics known before it (plus AER and DPS where they exist) and the points actually scored."""
+    if train_df is None or train_df.empty:
+        return pd.DataFrame()
+    r_ = train_df.copy()
+    if len(wf_all):
+        r_ = r_.merge(wf_all.assign(aer=np.clip(wf_all["xPts"] + best_alpha(wf_all) * wf_all["adj"], 0, None))[["id", "GW", "aer"]],
+                      on=["id", "GW"], how="left")
+    r_["aer"] = r_["aer"].fillna(r_["xPts"]) if "aer" in r_.columns else r_["xPts"]
+    dv_s = globals().get("dps_val")
+    if isinstance(dv_s, pd.DataFrame) and len(dv_s):
+        r_ = r_.merge(dv_s[["id", "GW", "dps"]], on=["id", "GW"], how="left")
+    r_["dps"] = r_["dps"].fillna(r_["xPts"]) if "dps" in r_.columns else r_["xPts"]
+    mn_ = ctx["h"][["id", "round", "minutes"]].rename(columns={"round": "GW"})
+    r_ = r_.merge(mn_, on=["id", "GW"], how="left")
+    if only_played:
+        r_ = r_[r_["minutes"].fillna(0) > 0]
+    r_ = r_.drop(columns=["minutes"])
+    if pos != "All positions":
+        r_ = r_[r_["element_type"].isin({"Goalkeepers & defenders": [1, 2], "Midfielders": [3], "Forwards": [4]}[pos])]
+    keep_ = ["id", "GW", "actual"] + [c_ for c_ in r_.select_dtypes("number").columns
+                                      if c_ not in ("id", "GW", "actual", "act60", "miss_self", "miss_opp", "q10", "q90", "adj")]
+    r_ = r_[list(dict.fromkeys(keep_))].replace([np.inf, -np.inf], np.nan)
+    return r_.fillna(r_.median(numeric_only=True))
+
+
+# =========================================================
+# POINTS CALCULATOR — pick metrics like calculator keys; it fits the equation and shows the prediction with its out-of-sample R²
+# =========================================================
+CALC_KEYS = [("aer", "AER"), ("dps", "DPS"), ("xPts", "Structural"), ("form", "Form"), ("pts_6", "Pts L6"), ("ppg", "PPG"),
+             ("mins_6", "Mins L6"), ("start_6", "Starts L6"), ("p60", "60+ %"), ("xMins", "xMins"), ("xG", "xG"), ("xA", "xA"),
+             ("p_goal", "Goal pts"), ("p_ast", "Assist pts"), ("p_cs", "CS pts"), ("cs_team", "CS %"), ("p_dc", "DEFCON pts"),
+             ("threat_6", "Threat"), ("creativity_6", "Creativity"), ("bps_6", "BPS"), ("bonus_6", "Bonus"), ("Fix", "Fixture"),
+             ("home", "Home"), ("mm_idx", "Matchup"), ("stab_self", "Stability"), ("perf70", "Pts 70+"), ("elite_rate", "Haul rate"),
+             ("expected_goal_involvements_6", "xGI")]
+CALC_LIVE = {"aer": "AER1", "dps": "DPS"}           # this gameweek's value for keys whose live column has a different name
+
+
+def _ridge(X, y, lam):
+    """Ridge regression on standardised metrics: weights are shrunk toward 0 by `lam`, which keeps them sensible when metrics overlap or
+    data is thin. Returns a predictor plus per-unit weights and constant."""
+    mu, sd = X.mean(0), X.std(0) + 1e-9
+    Z = np.column_stack([np.ones(len(X)), (X - mu) / sd])
+    w = np.linalg.solve(Z.T @ Z + lam * np.diag([0] + [1] * X.shape[1]), Z.T @ y)
+    per = w[1:] / sd
+    const = w[0] - float((per * mu).sum())
+    return (lambda Xn: const + Xn @ per), per, const
+
+
+@st.cache_data(show_spinner=False, max_entries=64)
+def calc_fit(rows, keys, before_gw=None):
+    """Weights and constant for the chosen keys, fitted on rows before `before_gw`. Exact duplicates are dropped; the amount of shrinkage is
+    chosen by out-of-sample accuracy (each gameweek predicted from earlier ones only); the R² reported is that out-of-sample figure."""
+    keys = list(keys)
+    fit_rows = rows[rows["GW"] < before_gw] if before_gw is not None else rows
+    if len(fit_rows) < 40 or not keys:
+        return None
+    used, dropped = [], []
+    for k_ in keys:                                     # identical or near-identical to a key already in the equation
+        dup = next((u_ for u_ in used if abs(np.corrcoef(fit_rows[k_], fit_rows[u_])[0, 1]) > 0.995), None) if fit_rows[k_].std() > 1e-9 else "constant"
+        (dropped.append((k_, dup)) if dup else used.append(k_))
+    if not used:
+        return {"used": [], "dropped": dropped}
+    gws = sorted(fit_rows["GW"].unique())
+    best = (np.nan, None)
+    scores = {}
+    for lam in (0.01, 1.0, 10.0, 100.0, 1000.0):
+        if len(gws) < 2:
+            break
+        yy, pp = [], []
+        for g in gws[1:]:
+            tr, te = fit_rows[fit_rows["GW"] < g], fit_rows[fit_rows["GW"] == g]
+            if len(tr) < 30 or not len(te):
+                continue
+            f_, _, _ = _ridge(tr[used].to_numpy(float), tr["actual"].to_numpy(float), lam)
+            pp.append(f_(te[used].to_numpy(float)))
+            yy.append(te["actual"].to_numpy(float))
+        if pp:
+            scores[lam] = _r2(np.concatenate(yy), np.concatenate(pp))
+    if scores:
+        lam_best = max(scores, key=scores.get)
+        best = (scores[lam_best], lam_best)
+    lam_use = best[1] if best[1] is not None else 10.0 * len(used)
+    X, y = fit_rows[used].to_numpy(float), fit_rows["actual"].to_numpy(float)
+    f_, per, const = _ridge(X, y, lam_use)
+    return {"const": float(const), "w": dict(zip(used, per.astype(float))), "r2": best[0], "r2_in": _r2(y, f_(X)), "n": len(fit_rows),
+            "gws": (int(min(gws)), int(max(gws))), "used": used, "dropped": dropped, "lam": lam_use}
+
+
+if page == "Points calculator":
+    st.subheader("Points calculator")
+    rows_c = sf_build_rows()
+    if rows_c.empty or full_df is None:
+        st.info("Needs a few finished gameweeks of model data.")
+    else:
+        keys_ok = [(k_, l_) for k_, l_ in CALC_KEYS if k_ in rows_c.columns]
+        ss_ = st.session_state
+        ss_.setdefault("calc_sel", ["aer"])
+        ss_["calc_sel"] = [k_ for k_ in ss_["calc_sel"] if k_ in dict(keys_ok)]
+
+        def _toggle(k_):
+            ss_["calc_sel"] = [x_ for x_ in ss_["calc_sel"] if x_ != k_] if k_ in ss_["calc_sel"] else ss_["calc_sel"] + [k_]
+
+        def _clear():
+            ss_["calc_sel"] = []
+
+        def _best():
+            res_ = None
+            try:
+                res_ = signal_finder(rows_c, max(1, min(3, int(rows_c["GW"].nunique()) - 2)))
+            except Exception:
+                pass
+            if res_ is not None and len(res_["path"]):
+                ss_["calc_sel"] = [k_ for k_ in res_["path"]["added"] if k_ in dict(keys_ok)] or ["aer"]
+
+        st.markdown("""<style>
+.st-key-calc { background: linear-gradient(180deg,#2b0030,#37003C); border-radius: 22px; padding: 16px 16px 10px; box-shadow: 0 10px 28px rgba(0,0,0,.35); }
+.st-key-calc label p { color: #e9d9f2 !important; }
+.calc-screen { background: #c9f7d9; color: #0b2d18; border-radius: 12px; padding: 12px 14px; margin: 6px 0 12px;
+  font-family: "SF Mono", Menlo, Consolas, monospace; box-shadow: inset 0 2px 6px rgba(0,0,0,.25); }
+.calc-screen .eq { font-size: 12.5px; line-height: 1.55; word-break: break-word; }
+.calc-screen .res { font-size: 30px; font-weight: 800; text-align: right; margin-top: 4px; }
+.calc-screen .res small { font-size: 15px; font-weight: 600; opacity: .8; }
+.calc-screen .meta { font-size: 11px; opacity: .75; text-align: right; }
+.st-key-calc .stButton > button { width: 100%; min-height: 2.9rem; border-radius: 12px !important; font-weight: 700 !important; }
+.st-key-calc .stButton > button[kind="secondary"], .st-key-calc [data-testid="stBaseButton-secondary"] { background: #4d1556 !important;
+  color: #f3e8f7 !important; border: 1px solid #7a3a85 !important; }
+.st-key-calc .stButton > button[kind="secondary"] p, .st-key-calc [data-testid="stBaseButton-secondary"] p { color: #f3e8f7 !important; }
+.st-key-calc .stButton > button[kind="primary"] { background: linear-gradient(90deg,#04F5FF,#00FF87) !important; color: #37003C !important; }
+</style>""", unsafe_allow_html=True)
+        with _keyed_container("calc"):
+            # the "number bar": player and gameweek
+            opts_p = full_df[full_df["E90"] > 0].sort_values("AER1", ascending=False).index.tolist() or full_df.index.tolist()
+            if ss_.get("calc_player") not in opts_p:
+                ss_["calc_player"] = opts_p[0]
+            gw_opts = sorted({int(g_) for g_ in rows_c["GW"].unique() if g_ >= 1} | {int(selected_gw)})
+            if ss_.get("calc_gw") not in gw_opts:
+                ss_["calc_gw"] = int(selected_gw)
+            s1_, s2_, s3_ = st.columns([3, 1.2, 1.4])
+            pid_c = s1_.selectbox("Player", opts_p, key="calc_player",
+                                  format_func=lambda i_: f"{full_df.at[i_, 'web_name']} ({full_df.at[i_, 'team_code']}, {full_df.at[i_, 'position']})")
+            gw_c = s2_.selectbox("Gameweek", gw_opts, key="calc_gw")
+            ss_.setdefault("calc_pos", True)
+            by_pos = s3_.toggle("Fit on his position", key="calc_pos", help="Fit the weights on players in the same position group only.")
+            et_c = int(full_df.at[pid_c, "element_type"])
+            grp_ = {1: [1, 2], 2: [1, 2], 3: [3], 4: [4]}[et_c]
+            rows_fit = rows_c[rows_c["element_type"].isin(grp_)] if by_pos else rows_c
+            past = gw_c < int(selected_gw) and ((rows_c["GW"] == gw_c) & (rows_c["id"] == pid_c)).any()
+            sel_c = ss_["calc_sel"]
+            fit_c = calc_fit(rows_fit, tuple(sel_c), int(gw_c)) if sel_c else None
+            # the player's values for this gameweek
+            vals = {}
+            if past:
+                row_p = rows_c[(rows_c["GW"] == gw_c) & (rows_c["id"] == pid_c)].iloc[0]
+                vals = {k_: float(row_p[k_]) for k_ in sel_c}
+                actual_c = float(row_p["actual"])
+            else:
+                for k_ in sel_c:
+                    col_ = CALC_LIVE.get(k_, k_)
+                    v_ = full_df.at[pid_c, col_] if col_ in full_df.columns else np.nan
+                    vals[k_] = float(v_) if pd.notna(v_) else float(rows_fit[k_].median())
+                actual_c = None
+            lab_ = dict(keys_ok)
+            notes_ = []
+            if fit_c is None or not fit_c.get("used"):
+                eq_html = ("Tap metrics below to build an equation." if not sel_c else
+                           "Not enough earlier gameweeks to fit this equation." if fit_c is None else "Those metrics carry no usable information yet.")
+                res_html = "–"
+                meta_ = ""
+            else:
+                used_ = fit_c["used"]
+                terms = [f"{fit_c['w'][k_]:+.3f}×{lab_[k_]}<b>({vals[k_]:.2f})</b>" for k_ in used_]
+                pred_c = fit_c["const"] + sum(fit_c["w"][k_] * vals[k_] for k_ in used_)
+                r2_txt = f"R² {fit_c['r2']:.3f}" if pd.notna(fit_c["r2"]) else "R² needs 2+ gameweeks"
+                eq_html = f"pts = {fit_c['const']:+.3f} " + " ".join(terms)
+                res_html = f"{pred_c:.2f} pts <small>({r2_txt})</small>"
+                meta_ = (f"{len(used_)} metric{'s' if len(used_) != 1 else ''} · fitted on {fit_c['n']:,} player-gameweeks, GW{fit_c['gws'][0]}–{fit_c['gws'][1]}"
+                         + (f" · actual this GW: <b>{actual_c:.0f} pts</b>" if actual_c is not None else ""))
+                if fit_c["dropped"]:
+                    notes_.append("Left out (identical to another key so far): " + ", ".join(
+                        f"{lab_.get(k_, k_)}" + (f" = {lab_.get(d_, d_)}" if d_ != "constant" else " (no variation)") for k_, d_ in fit_c["dropped"]))
+                if fit_c["n"] / max(len(used_), 1) < 40:
+                    notes_.append(f"Only about {fit_c['n'] // max(len(used_), 1)} rows per metric: with this little data, fewer metrics usually predict "
+                                  "better. Weights are shrunk to keep them sensible.")
+                if pd.notna(fit_c["r2"]) and fit_c["r2"] < fit_c["r2_in"] - 0.08:
+                    notes_.append(f"It fits the past much better (R² {fit_c['r2_in']:.2f}) than it predicts unseen weeks ({fit_c['r2']:.2f}): "
+                                  "a sign of too many metrics. Try removing some.")
+            st.markdown(f"<div class='calc-screen'><div class='meta'>{_html.escape(str(full_df.at[pid_c, 'web_name']))} · GW{gw_c}"
+                        f"{' (past)' if past else ''}</div><div class='eq'>{eq_html}</div><div class='res'>{res_html}</div>"
+                        f"<div class='meta'>{meta_}</div>"
+                        + "".join(f"<div class='meta' style='text-align:left;color:#7a2a00;opacity:.95'>⚠ {_html.escape(n_)}</div>" for n_ in notes_)
+                        + "</div>", unsafe_allow_html=True)
+            # the keys
+            per_row = 4
+            for i0 in range(0, len(keys_ok), per_row):
+                cols_k = st.columns(per_row)
+                for j_, (k_, l_) in enumerate(keys_ok[i0:i0 + per_row]):
+                    cols_k[j_].button(("✓ " + l_) if k_ in sel_c else l_, key=f"calc_k_{k_}", on_click=_toggle, args=(k_,),
+                                      type="primary" if k_ in sel_c else "secondary", use_container_width=True, help=sf_label(k_))
+            b1_, b2_ = st.columns(2)
+            b1_.button("C", key="calc_c", on_click=_clear, use_container_width=True, help="Clear the equation.")
+            b2_.button("Best", key="calc_best", on_click=_best, use_container_width=True,
+                       help="Load the combination the Signal finder found best (runs the search if needed).")
+        st.caption("Green with a ✓ = in the equation. Start with two or three metrics and add more only if the R² rises. "
+                   "Tap metrics to add or remove them. The weights and constant are refitted for whatever you choose, using only gameweeks before "
+                   "the one shown (for a past gameweek you also see what he actually scored). The R² in brackets is out of sample: each gameweek "
+                   "predicted from earlier ones only, so adding metrics only raises it if they genuinely help. Hover a key for its full name.")
+
+if page == "Signal finder":
+    st.subheader("Signal finder: what actually predicts points?")
+    st.caption("Searches every statistic the model computes before a gameweek (alone, in pairs and in small combinations) for the strongest "
+               "link to the points players actually scored. Every score is out of sample: each gameweek is predicted from earlier gameweeks only, "
+               "and the most recent gameweeks are held back entirely and used to confirm the winners.")
+    if train_df is None or train_df.empty:
+        st.info("Needs a few finished gameweeks of model data.")
+    else:
+        f1_, f2_, f3_ = st.columns([2, 2, 1])
+        pos_sf = f1_.selectbox("Players", ["All positions", "Goalkeepers & defenders", "Midfielders", "Forwards"], key="sf_pos")
+        cond_sf = f2_.selectbox("Rows", ["Every player-gameweek", "Only when he played (1+ minute)"], key="sf_cond",
+                                help="'Only when he played' uses hindsight (whether he played), so it measures how well stats predict points "
+                                     "given that he plays. The first option includes the uncertainty about minutes.")
+        _n_gw_sf = int(train_df["GW"].nunique())
+        _hold_opts = [h_ for h_ in (1, 2, 3, 4, 5) if h_ <= max(_n_gw_sf - 2, 1)]
+        if st.session_state.get("sf_hold") not in _hold_opts:
+            st.session_state["sf_hold"] = _hold_opts[min(len(_hold_opts) - 1, 2)]
+        hold_sf = f3_.selectbox("Held-out GWs", _hold_opts, key="sf_hold",
+                                help="The most recent gameweeks kept out of the search and used only to confirm the winners.")
+        if _n_gw_sf < 6:
+            st.info(f"Only {_n_gw_sf} gameweeks of model data so far (they start at GW3), so results will be noisy. Turning on "
+                    "**Learn from past seasons** (sidebar → Tune on history) adds a whole season of gameweeks to the search.")
+        r_ = sf_build_rows(pos_sf, cond_sf.startswith("Only"))
+        if st.button("Run the search", type="primary") or st.session_state.get("sf_ran"):
+            st.session_state["sf_ran"] = True
+            res = signal_finder(r_, int(hold_sf))
+            if res is None:
+                st.info("Not enough gameweeks yet: the search needs at least two gameweeks to learn from plus the held-out ones. "
+                        "Hold out fewer, or turn on Learn from past seasons.")
+            else:
+                s_, p_, pa_ = res["single"], res["pairs"], res["path"]
+                best_pair = p_.iloc[0] if len(p_) else None
+                best_combo = pa_.iloc[-1] if len(pa_) else None
+                aer_r = s_.loc[s_["stat"] == "aer", "Best R²"]
+                c1, c2, c3, c4 = st.columns(4)
+                c1.metric("Best single stat", sf_label(s_.at[0, "stat"]), f"R² {s_.at[0, 'Best R²']:.3f}", delta_color="off")
+                if best_pair is not None:
+                    c2.metric("Best pair", f"{sf_label(best_pair['stat 1'])} × {sf_label(best_pair['stat 2'])}",
+                              f"R² {best_pair['Best R²']:.3f}", delta_color="off")
+                if best_combo is not None:
+                    c3.metric(f"Best {int(best_combo['step'])}-stat combination", f"R² {best_combo['Combination R²']:.3f}",
+                              f"confirmed {best_combo['Confirmed R² (held-out GWs)']:.3f}", delta_color="off")
+                if len(aer_r):
+                    c4.metric("AER on its own", f"R² {float(aer_r.iloc[0]):.3f}", "for comparison", delta_color="off")
+                st.caption(f"{res['n']:,} player-gameweeks · discovery on GWs {min(res['disc_gws'])}–{max(res['disc_gws'])}, confirmation on GWs "
+                           f"{', '.join(str(int(g_)) for g_ in res['hold'])} ({res['n_hold']:,} rows the search never saw). R² = share of the "
+                           "week-to-week differences in points it explains (0 = none, 1 = all). For single gameweeks of FPL, 0.15–0.25 is strong.")
+                st.markdown("#### Strongest single statistics")
+                t1 = s_.head(15).assign(Statistic=lambda d: d["stat"].map(sf_label))[["Statistic", "Straight-line R²", "Shape R²",
+                                                                                     "Confirmed R² (held-out GWs)", "Correlation"]]
+                st.dataframe(t1.round(3), use_container_width=True, hide_index=True)
+                st.markdown("#### Strongest pairs")
+                t2 = p_.head(15).assign(**{"Stat 1": lambda d: d["stat 1"].map(sf_label), "Stat 2": lambda d: d["stat 2"].map(sf_label)})[
+                    ["Stat 1", "Stat 2", "Line + interaction R²", "4×4 grid R²", "Gain over better single", "Confirmed R² (held-out GWs)"]]
+                st.dataframe(t2.round(3), use_container_width=True, hide_index=True)
+                if best_pair is not None:
+                    a_, b_ = best_pair["stat 1"], best_pair["stat 2"]
+                    g_, ra_, rb_ = grid_table(r_, a_, b_)
+                    piv = g_.pivot(index="qa", columns="qb", values="mean")
+                    cnt = g_.pivot(index="qa", columns="qb", values="size")
+                    vmin, vmax = float(np.nanmin(piv.values)), float(np.nanmax(piv.values))
+                    head_ = "".join(f"<th>{sf_label(b_)}<br>{rb_.loc[q_, 'min']:.2f}–{rb_.loc[q_, 'max']:.2f}</th>" for q_ in piv.columns)
+                    body_ = ""
+                    for qa_ in piv.index:
+                        body_ += f"<tr><th style='text-align:left'>{sf_label(a_)}<br>{ra_.loc[qa_, 'min']:.2f}–{ra_.loc[qa_, 'max']:.2f}</th>"
+                        for qb_ in piv.columns:
+                            v_ = piv.loc[qa_, qb_]
+                            if pd.isna(v_):                     # no player-gameweeks in that combination of ranges
+                                body_ += "<td style='text-align:center;opacity:.5'>–<br><small>0 rows</small></td>"
+                                continue
+                            x_ = (v_ - vmin) / max(vmax - vmin, 1e-9)
+                            rgb_ = _interp(_VALUE_STOPS, x_)
+                            fg_ = "#111" if (0.299 * rgb_[0] + 0.587 * rgb_[1] + 0.114 * rgb_[2]) / 255 > 0.6 else "#fff"
+                            body_ += (f"<td style='background:{_rgb(rgb_)};color:{fg_};text-align:center;padding:8px;border-radius:6px'>"
+                                      f"<b>{v_:.2f}</b><br><small>{int(cnt.loc[qa_, qb_])} rows</small></td>")
+                        body_ += "</tr>"
+                    st.markdown(f"#### If {sf_label(a_)} is… and {sf_label(b_)} is… → average points scored")
+                    st.markdown(f"<table style='border-collapse:separate;border-spacing:3px;width:100%;font-size:13px'><tr><th></th>{head_}</tr>{body_}</table>",
+                                unsafe_allow_html=True)
+                    st.caption("Each cell = the average points players actually scored when both statistics were in those ranges (quarters of all "
+                               "player-gameweeks). Green = high, red = low.")
+                if best_combo is not None:
+                    st.markdown("#### Best small combination (built one statistic at a time)")
+                    st.dataframe(pa_.assign(**{"Added": pa_["added"].map(sf_label)})[["step", "Added", "Combination R²", "Confirmed R² (held-out GWs)"]].round(3),
+                                 use_container_width=True, hide_index=True)
+                    cw_ = res["combo"]
+                    st.markdown("**The formula:** expected points ≈ " + " + ".join(
+                        f"{r__['Weight per unit']:+.3f} × {sf_label(r__['stat'])}" for _, r__ in cw_.iterrows()) + " + constant")
+                    st.caption("A statistic is added only if it raises the out-of-sample R² by more than 0.002. Weights are fitted on all rows; "
+                               "'per unit' = points per one unit of that statistic.")
+                st.caption("How to read it: discovery R² picks the winners; 'confirmed' re-scores them on gameweeks the search never saw. If a "
+                           "pair or combination looks great in discovery but drops on confirmation, it found noise. The confirmed figures are the honest ones.")
+
+if page == "Match analyzer":
+    st.markdown(MP_CSS, unsafe_allow_html=True)
+    st.subheader("Match analyzer")
+    gws_a = sorted(int(x_) for x_ in fx["event"].unique())
+    last_fin = max(started) if started else selected_gw
+    st.session_state.setdefault("ma_gw", int(last_fin))
+    a1_, a2_ = st.columns([1, 3])
+    gw_a = a1_.selectbox("Gameweek", gws_a, key="ma_gw")
+    fxa = fx[fx["event"] == gw_a]
+    if fxa.empty:
+        st.info("No fixtures in that gameweek.")
+    else:
+        def _fx_lab(fid_):
+            r_ = fxa[fxa["id"] == fid_].iloc[0]
+            sc_ = (f" {int(r_['team_h_score'])}–{int(r_['team_a_score'])} " if bool(r_["finished"]) and pd.notna(r_["team_h_score"]) else " v ")
+            return f"{code[int(r_['team_h'])]}{sc_}{code[int(r_['team_a'])]}"
+        if st.session_state.get("ma_fix") not in fxa["id"].tolist():
+            st.session_state["ma_fix"] = int(fxa["id"].iloc[0])
+        fid_a = a2_.selectbox("Fixture", fxa["id"].tolist(), format_func=_fx_lab, key="ma_fix")
+        fa = fxa[fxa["id"] == fid_a].iloc[0]
+        ht, at = int(fa["team_h"]), int(fa["team_a"])
+        hc, ac = code[ht], code[at]
+        done = bool(fa["finished"]) and pd.notna(fa["team_h_score"])
+        # ---- 1. what the model expected (built only from matches before this gameweek) ----
+        pre = fixture_predictions(ctx["long"], fxa[fxa["id"] == fid_a][["id", "team_h", "team_a"]], gw_a, p, fin=ctx["fin"])
+        if len(pre):
+            pr_ = pre.iloc[0]
+            M_ = score_matrix(pr_["xg_h"], pr_["xg_a"])
+            ph_, pd_, pa_ = pr_["p_home"] * 100, pr_["p_draw"] * 100, pr_["p_away"] * 100
+            head_ = (f"{int(fa['team_h_score'])}–{int(fa['team_a_score'])}" if done else pr_["score"])
+            sub_ = "final score" if done else f"predicted score · {pr_['p_score'] * 100:.0f}%"
+            verdict = ""
+            if done:
+                hs_, as_ = int(fa["team_h_score"]), int(fa["team_a_score"])
+                p_res = pr_["p_home"] if hs_ > as_ else (pr_["p_draw"] if hs_ == as_ else pr_["p_away"])
+                p_ex = float(M_[hs_, as_]) if hs_ < M_.shape[0] and as_ < M_.shape[1] else 0.0
+                tone = ("an expected result" if p_res >= 0.45 else "a plausible result" if p_res >= 0.25 else "an upset")
+                verdict = (f"<div class='mp-xg'>Before kick-off the model gave this result <b>{p_res * 100:.0f}%</b> ({tone}) and this exact score "
+                           f"<b>{p_ex * 100:.1f}%</b>. It predicted {pr_['score']}.</div>")
+            st.markdown(f"<div class='mp' style='max-width:640px'><div class='mp-teams'><div class='mp-team'>{jersey_svg(hc)}{hc}</div>"
+                        f"<div class='mp-score'>{head_}<small>{sub_}</small></div><div class='mp-team'>{jersey_svg(ac)}{ac}</div></div>"
+                        f"<div class='mp-xg'>Pre-match expected goals <b>{pr_['xg_h']:.2f} – {pr_['xg_a']:.2f}</b></div>"
+                        f"<div class='mp-bar'><span style='width:{ph_:.0f}%;background:#00C46A;color:#fff'>{hc} {ph_:.0f}%</span>"
+                        f"<span style='width:{pd_:.0f}%;background:#c9c6d6;color:#37003C'>Draw {pd_:.0f}%</span>"
+                        f"<span style='width:{pa_:.0f}%;background:#963CFF;color:#fff'>{ac} {pa_:.0f}%</span></div>{verdict}</div>",
+                        unsafe_allow_html=True)
+        if not done:
+            st.info("This match hasn't been played yet, so this is a preview. Team news, matchups and shot maps are under More → Matchups.")
+        else:
+            # ---- 2. what the chances said (Understat shots) ----
+            st.markdown("#### The chances")
+            try:
+                us_ma = us_league_matches(understat_season())
+                th_u, ta_u = us_team_title(ht, us_ma), us_team_title(at, us_ma)
+                row_u = us_ma[(us_ma["home"] == th_u) & (us_ma["away"] == ta_u)] if th_u and ta_u else pd.DataFrame()
+                shots_u = us_match_shots(int(row_u["id"].iloc[0])) if len(row_u) else pd.DataFrame()
+            except Exception as e_u:
+                shots_u = pd.DataFrame()
+                st.caption(f"Couldn't reach Understat ({type(e_u).__name__}); shot data unavailable right now.")
+            if len(shots_u):
+                xh_, xa_ = shots_u.loc[shots_u["side"] == "h", "xG"].sum(), shots_u.loc[shots_u["side"] == "a", "xG"].sum()
+                dh_, dd_, da_ = deserved_result(shots_u)
+                k1, k2, k3 = st.columns(3)
+                k1.metric("Expected goals (match)", f"{xh_:.2f} – {xa_:.2f}", f"{(shots_u['side'] == 'h').sum()} – {(shots_u['side'] == 'a').sum()} shots",
+                          delta_color="off")
+                k2.metric(f"On these chances, {hc} win", f"{dh_ * 100:.0f}%", f"draw {dd_ * 100:.0f}% · {ac} {da_ * 100:.0f}%", delta_color="off",
+                          help="Replays every shot 20,000 times, each scoring with probability equal to its xG.")
+                hs_, as_ = int(fa["team_h_score"]), int(fa["team_a_score"])
+                fair_ = "the result matched the chances" if (hs_ > as_) == (xh_ > xa_ + 0.3) and (hs_ < as_) == (xa_ > xh_ + 0.3) else \
+                        "the finishing decided it more than the chances"
+                k3.metric("Verdict", "Fair" if fair_.startswith("the result") else "Finishing", fair_, delta_color="off")
+                race_, goals_ = xg_race_data(shots_u, hc, ac)
+                st.markdown("**Expected-goals race** (cumulative xG by minute)")
+                try:
+                    st.line_chart(race_, height=260, color=["#00C46A" if c_ == hc else "#963CFF" for c_ in race_.columns])
+                except Exception:
+                    st.line_chart(race_, height=260)
+                if goals_:
+                    st.caption("Goals (from the shot data): " + " · ".join(goals_))
+                m1_, m2_ = st.columns(2)
+                for col_, side_, tc_, oc_ in ((m1_, "h", hc, ac), (m2_, "a", ac, hc)):
+                    col_.markdown(f"**{tc_} shots**")
+                    col_.markdown(shot_map_svg(shots_u[shots_u["side"] == side_], None, tc_, oc_, 0), unsafe_allow_html=True)
+                st.caption("Shot data: understat.com. Dots: bigger = better chance, colour = outcome.")
+            # ---- 3. the FPL side: points vs forecast, bonus race ----
+            st.markdown("#### FPL points vs forecast")
+            hg_ = ctx["h"][(ctx["h"]["round"] == gw_a) & (ctx["h"]["team"].isin([ht, at])) & (ctx["h"]["minutes"] > 0)].copy()
+            if hg_.empty:
+                st.info("No player data for this match yet.")
+            else:
+                if (hg_["n_played"] > 1).any():
+                    st.caption("One of these teams played twice this gameweek; FPL's per-gameweek totals include both matches.")
+                pl_ = players.set_index("id")
+                fc_ = pd.Series(dtype=float)
+                if len(train_df) and "xPts" in train_df.columns:            # structural forecast (exists from GW3)
+                    t_ = train_df[(train_df["GW"] == gw_a) & ((train_df["season"] == "this season") if "season" in train_df.columns else True)]
+                    fc_ = pd.Series(t_["xPts"].to_numpy(float), index=t_["id"].to_numpy())
+                if len(wf_all):                                               # the learned forecast replaces it where it exists
+                    w_ = wf_all[wf_all["GW"] == gw_a]
+                    fc_ = pd.concat([fc_, pd.Series(np.clip(w_["xPts"] + best_alpha(wf_all) * w_["adj"], 0, None).to_numpy(float),
+                                                    index=w_["id"].to_numpy())])
+                    fc_ = fc_[~fc_.index.duplicated(keep="last")]
+                tb_ = pd.DataFrame({"Player": hg_["id"].map(pl_["web_name"]), "Team": hg_["team"].map(code),
+                                    "Pos": hg_["element_type"].map({1: "GKP", 2: "DEF", 3: "MID", 4: "FWD"}), "Mins": hg_["minutes"].astype(int),
+                                    "Goals": hg_["goals_scored"].astype(int), "Assists": hg_["assists"].astype(int),
+                                    "Bonus": hg_["bonus"].astype(int), "BPS": hg_["bps"].astype(int),
+                                    "DEFCON": hg_["defensive_contribution"].astype(int), "Saves": hg_["saves"].astype(int),
+                                    "Points": hg_["total_points"].astype(int),
+                                    "Forecast (pts)": pd.to_numeric(hg_["id"].map(fc_), errors="coerce").astype(float).round(2)})
+                tb_["vs forecast"] = (tb_["Points"] - tb_["Forecast (pts)"]).astype(float).round(2)
+                if tb_["Forecast (pts)"].isna().all():
+                    st.caption("No pre-match forecasts exist for this gameweek (the model's forecasts start at GW3).")
+                tb_ = tb_.sort_values("Points", ascending=False).reset_index(drop=True)
+                if tb_["Forecast (pts)"].notna().any():
+                    up_ = tb_.dropna(subset=["vs forecast"]).nlargest(3, "vs forecast")
+                    dn_ = tb_.dropna(subset=["vs forecast"]).nsmallest(3, "vs forecast")
+                    st.markdown("**Beat their forecast:** " + ", ".join(f"{r_['Player']} {r_['Points']} pts (forecast {r_['Forecast (pts)']:.1f})" for _, r_ in up_.iterrows())
+                                + "  \\n**Missed it:** " + ", ".join(f"{r_['Player']} {r_['Points']} pts (forecast {r_['Forecast (pts)']:.1f})" for _, r_ in dn_.iterrows()))
+                sty_a = tb_.style.apply(lambda s_: pct_colors(s_), subset=["Points"], axis=0).apply(
+                    lambda s_: [("background-color:#c8f0d8" if v_ > 1 else "background-color:#f6d0d0" if v_ < -1 else "") if pd.notna(v_) else "" for v_ in s_],
+                    subset=["vs forecast"], axis=0).format(na_rep="–")
+                st.dataframe(sty_a, use_container_width=True, hide_index=True, height=min(560, 38 + 35 * len(tb_)))
+                br_ = tb_.nlargest(6, "BPS")[["Player", "Team", "BPS", "Bonus"]]
+                st.markdown("**Bonus race:** " + " · ".join(f"{r_['Player']} {r_['BPS']} BPS" + (f" (+{r_['Bonus']})" if r_["Bonus"] else "") for _, r_ in br_.iterrows()))
+                # ---- 4. team news: regulars who didn't play ----
+                prev_ = ctx["h"][(ctx["h"]["round"] < gw_a) & (ctx["h"]["round"] >= gw_a - 3) & ctx["h"]["team"].isin([ht, at])]
+                reg_ = prev_.groupby("id")["min_pm"].agg(["mean", "size"])
+                reg_ = reg_[(reg_["mean"] >= 60) & (reg_["size"] >= 2)].index
+                now_ = ctx["h"][ctx["h"]["round"] == gw_a].set_index("id")["minutes"]
+                out_ = [i_ for i_ in reg_ if float(now_.get(i_, 0)) == 0]
+                st.markdown("**Regulars who didn't play:** " + (", ".join(f"{pl_.at[i_, 'web_name']} ({code[int(pl_.at[i_, 'team'])]})" for i_ in out_ if i_ in pl_.index)
+                                                              if out_ else "none"))
+                # ---- 5. your league ----
+                lg_a = load_league(int(league_id))
+                if my_entry_sel is not None:
+                    mine_a = [i_ for i_ in squad_for(lg_a, my_entry_sel, gw_a, next_gw) if i_ in set(hg_["id"])]
+                    opp_le_ = None
+                    mt_a = lg_a["matches"]
+                    if not mt_a.empty and {"event", "league_entry_1", "league_entry_2"} <= set(mt_a.columns):
+                        r_m = mt_a[(mt_a["event"] == gw_a) & ((mt_a["league_entry_1"] == my_entry_sel) | (mt_a["league_entry_2"] == my_entry_sel))]
+                        if len(r_m):
+                            opp_le_ = int(r_m["league_entry_2"].iloc[0] if int(r_m["league_entry_1"].iloc[0]) == my_entry_sel else r_m["league_entry_1"].iloc[0])
+                    theirs_a = [i_ for i_ in squad_for(lg_a, opp_le_, gw_a, next_gw) if i_ in set(hg_["id"])] if opp_le_ is not None else []
+                    pts_ = hg_.set_index("id")["total_points"]
+                    fmt_ = lambda ids_: ", ".join(f"{pl_.at[i_, 'web_name']} {int(pts_.get(i_, 0))} pts" for i_ in ids_) or "none"
+                    st.markdown(f"**Your players in this match:** {fmt_(mine_a)}  \\n**Your opponent's:** {fmt_(theirs_a)}")
+
 if page == "Matchups":
-    st.subheader("Matchup matrix")
-    st.caption("What each opponent has conceded to attackers of each position this season (recent games weighted most, shrunk toward the league average). "
-               "1.00 = league average; above 1 = leaks more. Each attacker's own matchup number blends goals and assists conceded according to whether he is a "
-               "finisher or a creator. FPL data has no left/right-flank or lineup-position detail, so this works by position and by type of output, not by side of the pitch.")
-    fx_now = fx[fx["event"] == selected_gw]
-    mv = matchup_view(matchup_tables(ctx, selected_gw, p), fx_now, code)
-    if mv.empty:
+    fx_sm = fx[fx["event"] == selected_gw]
+    st.markdown(MP_CSS, unsafe_allow_html=True)
+    st.subheader(f"Match predictions · GW{selected_gw}")
+    if fx_sm.empty:
         st.info("No fixtures this gameweek.")
     else:
-        sty_m = mv.style
-        for c_ in ["Goals conceded", "Assists conceded", "Threat conceded", "Creativity conceded", "FPL pts conceded", "Goals leak vs team norm"]:
-            sty_m = sty_m.apply(lambda s_: pct_colors(s_), subset=[c_], axis=0)
-        st.dataframe(sty_m.format({c_: "{:.2f}" for c_ in mv.columns if c_ not in ("Attackers", "Facing")}), use_container_width=True, hide_index=True, height=520)
+        # team news: FPL's flags give the default missing list (out = 1, doubtful = 1 - chance of playing); each fixture's list can be
+        # edited in the deep-dive below. How much it matters is measured on this season's matches.
+        sh_now = player_shares(ctx["h"], players, selected_gw)
+        abs_coefs, abs_tab, abs_n = absence_effect_fit(ctx["long"], ctx["fin"], ctx["h"], players, p)
+        _flag_w = {}
+        for _, r_ in players.iterrows():
+            stt_, ch_ = str(r_.get("status", "a")), pd.to_numeric(r_.get("chance_of_playing_next_round"), errors="coerce")
+            if stt_ in ("i", "s", "u") or (pd.notna(ch_) and ch_ <= 25):
+                _flag_w[int(r_["id"])] = 1.0
+            elif stt_ == "d":
+                _flag_w[int(r_["id"])] = 1 - (float(ch_) / 100 if pd.notna(ch_) else 0.5)
+        miss_w = {}
+        for _, f_ in fx_sm.iterrows():
+            for t_ in (int(f_["team_h"]), int(f_["team_a"])):
+                key_ = f"mu_miss_{int(f_['id'])}_{t_}"
+                tp_ = players.loc[players["team"] == t_, "id"].astype(int)
+                if key_ in st.session_state:                      # your edit for this fixture
+                    for pid_ in st.session_state[key_]:
+                        miss_w[int(pid_)] = 1.0
+                else:
+                    for pid_ in tp_:
+                        if pid_ in _flag_w:
+                            miss_w[pid_] = _flag_w[pid_]
+        miss_now = team_absence(miss_w, sh_now, players)
+        NEWS_MODES = {"Measured from this season": abs_coefs, "Standard (attack 50%, defence 15%)": (0.5, 0.15), "Off": (0.0, 0.0)}
+        st.session_state.setdefault("mu_news_mode", "Measured from this season")
+        news_mode = st.radio("Team news strength", list(NEWS_MODES), key="mu_news_mode", horizontal=True,
+                             help="Measured = the strength that best predicted this season's finished matches (it can be 0 early in the season, when "
+                                  "there are few absences to learn from). Standard = a typical effect: a player with 30% of his team's attack missing "
+                                  "cuts its expected goals by 15%. Off = ignore who's missing.")
+        news_coefs = NEWS_MODES[news_mode]
+        preds = fixture_predictions(ctx["long"], fx_sm[["id", "team_h", "team_a"]], selected_gw, p,
+                                    (mkt or {}).get("team") if mkt_live else None, mkt_w if mkt_live else 0.0, ctx["fin"],
+                                    miss_now, news_coefs)
+        cols_p = st.columns(3)
+        for k_, (_, r_) in enumerate(preds.iterrows()):
+            hc, ac = code[int(r_["home"])], code[int(r_["away"])]
+            ph_, pd_, pa_ = r_["p_home"] * 100, r_["p_draw"] * 100, r_["p_away"] * 100
+            cols_p[k_ % 3].markdown(
+                f"<div class='mp'><div class='mp-teams'><div class='mp-team'>{jersey_svg(hc)}{hc}</div>"
+                f"<div class='mp-score'>{r_['score']}<small>predicted score · {r_['p_score'] * 100:.0f}%</small></div>"
+                f"<div class='mp-team'>{jersey_svg(ac)}{ac}</div></div>"
+                f"<div class='mp-xg'>Expected goals <b>{r_['xg_h']:.2f} – {r_['xg_a']:.2f}</b> · likeliest exact scores {r_['next_scores']}</div>"
+                f"<div class='mp-bar'><span style='width:{ph_:.0f}%;background:#00C46A;color:#fff'>{hc} {ph_:.0f}%</span>"
+                f"<span style='width:{pd_:.0f}%;background:#c9c6d6;color:#37003C'>Draw {pd_:.0f}%</span>"
+                f"<span style='width:{pa_:.0f}%;background:#963CFF;color:#fff'>{ac} {pa_:.0f}%</span></div>"
+                f"<div class='mp-stats'><span>{hc} clean sheet <b>{r_['cs_h'] * 100:.0f}%</b></span><span>{ac} clean sheet <b>{r_['cs_a'] * 100:.0f}%</b></span>"
+                f"<span>Both score <b>{r_['btts'] * 100:.0f}%</b></span><span>Over 2.5 <b>{r_['over25'] * 100:.0f}%</b></span></div>"
+                + (f"<div class='mp-xg' style='margin-top:4px'>Team news: {hc} {r_['dxg_h']:+.2f} xG · {ac} {r_['dxg_a']:+.2f} xG</div>"
+                   if abs(r_["dxg_h"]) + abs(r_["dxg_a"]) >= 0.01 else "") + "</div>",
+                unsafe_allow_html=True)
+        bt_ = prediction_backtest(ctx["long"], ctx["fin"], p)
+        if len(abs_tab):
+            _b0 = abs_tab[(abs_tab["Attack loss"] == 0) & (abs_tab["Defence gain"] == 0)].iloc[0]
+            _bb = abs_tab[(abs_tab["Attack loss"] == abs_coefs[0]) & (abs_tab["Defence gain"] == abs_coefs[1])].iloc[0]
+            st.caption(f"**Team news effect**, measured on {abs_n} finished matches (regulars who played 0 minutes counted as missing): "
+                       + (f"a missing player cuts his team's expected goals by {abs_coefs[0] * 100:.0f}% of his share of their attack, and missing "
+                          f"defenders/keeper add {abs_coefs[1] * 100:.0f}% of their share to the opponent. Right result {_b0['Right result %']:.0f}% → "
+                          f"{_bb['Right result %']:.0f}%, probability error {_b0['Brier']:.3f} → {_bb['Brier']:.3f} with team news."
+                          if any(abs_coefs) else "missing players didn't measurably change results yet, so team news isn't applied. It is re-checked as "
+                          "results come in."))
+        src_txt = preds["source"].iloc[0] if len(preds) else "team ratings"
+        if len(bt_) >= 10:
+            st.caption(f"Based on {src_txt}: every team's attack and defence rated together from all of this season's matches, adjusting for who "
+                       f"they played, with goals blended {preds['xw'].iloc[0] * 100:.0f}% with expected goals and older matches fading (half-life "
+                       f"{preds['hl'].iloc[0]:.0f} gameweeks), both chosen by past accuracy. Predicted score = the likeliest score for the likeliest result; a single exact score is rarely more "
+                       f"than 12–15% likely, so it is usually a low one. Tested on {len(bt_)} finished matches, each predicted only "
+                       f"from earlier games: the likeliest result happened **{bt_['hit'].mean() * 100:.0f}%** of the time (guessing from this season's "
+                       f"home/draw/away rates: {bt_['base_hit'].mean() * 100:.0f}%); exact score {bt_['exact'].mean() * 100:.0f}%; probability error "
+                       f"(Brier) {bt_['brier'].mean():.3f} vs {bt_['base_brier'].mean():.3f} for the guess (lower is better).")
+        else:
+            st.caption(f"Based on the {src_txt}. The accuracy check needs a few more finished gameweeks.")
+
+        # ---- best attacking matchups across the gameweek ----
+        mm_all = matchup_tables(ctx, selected_gw, p)
+        best_ = []
+        for _, f_ in fx_sm.iterrows():
+            for atk_, dfn_, ven_ in ((int(f_["team_h"]), int(f_["team_a"]), "H"), (int(f_["team_a"]), int(f_["team_h"]), "A")):
+                for pos_, nm_ in ((2, "DEF"), (3, "MID"), (4, "FWD")):
+                    best_.append((mm_all["idx"]["pts"][dfn_, pos_], atk_, dfn_, ven_, pos_, nm_))
+        best_ = sorted(best_, reverse=True)[:8]
+        st.markdown("**Best attacking matchups this gameweek**")
+        lines_ = []
+        for v_, atk_, dfn_, ven_, pos_, nm_ in best_:
+            cand_ = full_df[(full_df["team"] == atk_) & (full_df["element_type"] == pos_) & (full_df["n_fix"] > 0)] if full_df is not None else pd.DataFrame()
+            top_ = ", ".join(f"{r_['web_name']} ({r_['AER1']:.1f})" for _, r_ in cand_.nlargest(2, "AER1").iterrows()) if len(cand_) else ""
+            lines_.append(f"- **{code[atk_]} {nm_}** ({ven_}) vs **{code[dfn_]}** — {code[dfn_]} give up **{(v_ - 1) * 100:+.0f}%** FPL points to "
+                          f"{nm_.lower()}s{(' · ' + top_) if top_ else ''}")
+        st.markdown("\n".join(lines_))
+        st.caption("+30% = that opponent concedes 30% more FPL points to players in that position than an average team (recent games weighted most). "
+                   "Numbers in brackets = expected points this gameweek.")
+
+        # ---- fixture deep-dive ----
+        st.subheader("Fixture deep-dive")
+        fix_lab = {int(r_["id"]): f"{code[int(r_['team_h'])]} v {code[int(r_['team_a'])]}" for _, r_ in fx_sm.iterrows()}
+        fid_sel = st.selectbox("Fixture", list(fix_lab), format_func=fix_lab.get, key="mu_fix")
+        fr_sel = fx_sm[fx_sm["id"] == fid_sel].iloc[0]
+        st.markdown("**Who's missing?** Starts with FPL's injury and suspension flags; add or remove players and the prediction above updates.")
+        cm_l, cm_r = st.columns(2)
+        for col_, t_ in zip((cm_l, cm_r), (int(fr_sel["team_h"]), int(fr_sel["team_a"]))):
+            key_ = f"mu_miss_{int(fid_sel)}_{t_}"
+            tp_ = players[players["team"] == t_].copy()
+            tp_["sh_att"] = tp_["id"].map(sh_now["att"]).fillna(0)
+            tp_["sh_def"] = tp_["id"].map(sh_now["def"]).fillna(0)
+            tp_ = tp_.sort_values(["sh_att", "sh_def", "minutes"], ascending=False)
+            if key_ not in st.session_state:
+                st.session_state[key_] = [int(i_) for i_ in tp_["id"] if _flag_w.get(int(i_), 0) >= 0.5]
+            lab_m = {int(r_["id"]): (f"{r_['web_name']} ({r_['position']}) · {r_['sh_att'] * 100:.0f}% of attack"
+                                     + (f", {r_['sh_def'] * 100:.0f}% of defence" if r_["sh_def"] > 0 else "")) for _, r_ in tp_.iterrows()}
+            col_.multiselect(f"Missing for {code[t_]}", list(lab_m), key=key_, format_func=lambda i_, l_=lab_m: l_.get(i_, str(i_)))
+        if len(abs_tab):
+            with st.expander("How much team news matters (tested on past matches)"):
+                st.dataframe(abs_tab.round(3).sort_values("Log loss"), use_container_width=True, hide_index=True)
+                st.caption("Each row re-predicts this season's finished matches from earlier games only, with missing players' effect at that strength. "
+                           "Lowest log loss is used. Attack loss 0.75 = a player with 30% of his team's attack missing cuts its expected goals by 22%.")
+        c_l, c_r = st.columns(2)
+        for col_, (atk_, dfn_, ven_) in zip((c_l, c_r), ((int(fr_sel["team_h"]), int(fr_sel["team_a"]), "home"),
+                                                          (int(fr_sel["team_a"]), int(fr_sel["team_h"]), "away"))):
+            rows_h = "".join(f"<tr><td class='pos'>{nm_}</td>" + "".join(_mm_cell(mm_all["idx"][s_][dfn_, pos_]) for s_ in ("g", "a", "thr", "pts")) + "</tr>"
+                             for pos_, nm_ in ((2, "Defenders"), (3, "Midfielders"), (4, "Forwards")))
+            bestpos_ = max(((mm_all["idx"]["pts"][dfn_, pos_], nm_) for pos_, nm_ in ((2, "defenders"), (3, "midfielders"), (4, "forwards"))))
+            col_.markdown(f"**{code[atk_]} attacking ({ven_}) — what {code[dfn_]} concede**", unsafe_allow_html=True)
+            col_.markdown(f"<table class='mm'><tr><th></th><th>Goals</th><th>Assists</th><th>Chances</th><th>FPL pts</th></tr>{rows_h}</table>",
+                          unsafe_allow_html=True)
+            col_.caption(f"Best target: {code[atk_]} {bestpos_[1]} ({(bestpos_[0] - 1) * 100:+.0f}% FPL points vs an average opponent).")
+        st.caption("Each cell compares this opponent with an average team: green = they give up more to that position (good for the attackers), "
+                   "red = they're tight. Chances = shot threat conceded. FPL data has no left/right-flank detail, so this works by position.")
+
+    st.subheader("Shot map")
+    if fx_sm.empty:
+        st.info("No fixtures this gameweek.")
+    else:
+        try:
+            us_m = us_league_matches(understat_season())
+        except Exception as e_us:
+            us_m = pd.DataFrame()
+            st.warning(f"Couldn't reach Understat right now ({type(e_us).__name__}). Shot maps need understat.com; try again later.")
+        if len(us_m):
+            s2_, s3_, s4_ = st.columns([2, 1.4, 1.6])
+            fid_sm = st.session_state.get("mu_fix", list(fix_lab)[0])
+            fid_sm = fid_sm if fid_sm in fix_lab else list(fix_lab)[0]
+            st.caption(f"Fixture: **{fix_lab[fid_sm]}** (change it under Fixture deep-dive).")
+            fr_ = fx_sm[fx_sm["id"] == fid_sm].iloc[0]
+            side_ids = {f"{code[int(fr_['team_h'])]} attacking": (int(fr_["team_h"]), int(fr_["team_a"])),
+                        f"{code[int(fr_['team_a'])]} attacking": (int(fr_["team_a"]), int(fr_["team_h"]))}
+            side_sm = s2_.radio("Side", list(side_ids), key="sm_side", horizontal=True)
+            last_n = s3_.selectbox("Matches back", [5, 10, 38], index=1, key="sm_n", format_func=lambda n_: "Season" if n_ == 38 else f"Last {n_}")
+            sit_sm = s4_.selectbox("Shots", ["Open play", "All (no penalties)", "All"], key="sm_sit")
+            atk_id, def_id = side_ids[side_sm]
+            atk_t, def_t = us_team_title(atk_id, us_m), us_team_title(def_id, us_m)
+            if not atk_t or not def_t:
+                st.info("Couldn't match these clubs to Understat's names.")
+            else:
+                with st.spinner("Loading shots from Understat…"):
+                    a_sh, n_a = us_team_shots(atk_t, us_m, last_n)
+                    d_sh, n_d = us_team_shots(def_t, us_m, last_n)
+
+                def _sit(d_):
+                    if d_ is None or d_.empty:
+                        return d_
+                    if sit_sm == "Open play":
+                        return d_[d_["situation"] == "OpenPlay"]
+                    if sit_sm.startswith("All (no"):
+                        return d_[d_["situation"] != "Penalty"]
+                    return d_
+
+                att_all = _sit(a_sh[a_sh["team"] == atk_t]) if len(a_sh) else pd.DataFrame()
+                con_all = _sit(d_sh[d_sh["opp"] == def_t]) if len(d_sh) else pd.DataFrame()
+                if att_all is None or att_all.empty:
+                    st.info(f"No {atk_t} shots found in those matches.")
+                else:
+                    by_p = att_all.groupby("player")["xG"].sum().sort_values(ascending=False)
+                    who = st.selectbox("Player (or the whole team)", ["Whole team"] + list(by_p.index), key="sm_player",
+                                       format_func=lambda p_: p_ if p_ == "Whole team" else f"{p_} · {by_p[p_]:.2f} xG")
+                    att_ = att_all if who == "Whole team" else att_all[att_all["player"] == who]
+                    base_sh = pd.concat([a_sh, d_sh], ignore_index=True).drop_duplicates(["match", "minute", "player", "X", "Y"])
+                    base_sh = _sit(base_sh)
+                    st.markdown(shot_map_svg(att_, con_all, who if who != "Whole team" else atk_t, def_t, n_d, base_sh), unsafe_allow_html=True)
+                    # does he shoot from where they concede?
+                    whose_ = "His" if who != "Whole team" else f"{atk_t}'s"
+                    if len(con_all) and n_d:
+                        wk_ = zone_weakness(con_all, base_sh)
+                        weak_z = set(wk_[wk_ > 1.15].index)
+                        az_ = att_.assign(z=shot_zone(att_))
+                        bz_ = base_sh.assign(z=shot_zone(base_sh))
+                        share_ = float(az_.loc[az_["z"].isin(weak_z), "xG"].sum() / max(az_["xG"].sum(), 1e-9))
+                        typ_ = float(bz_.loc[bz_["z"].isin(weak_z), "xG"].sum() / max(bz_["xG"].sum(), 1e-9))
+                        k1_, k2_, k3_ = st.columns(3)
+                        k1_.metric("Shots / xG", f"{len(att_)} / {att_['xG'].sum():.2f}", f"{att_['xG'].sum() / max(n_a, 1):.2f} xG per match", delta_color="off")
+                        k2_.metric(f"{def_t} concede", f"{con_all['xG'].sum() / n_d:.2f} xG / match", f"{len(con_all) / n_d:.1f} shots per match", delta_color="off")
+                        k3_.metric(f"{whose_} xG from {def_t}'s weak spots", f"{share_ * 100:.0f}%",
+                                   f"{(share_ - typ_) * 100:+.0f} pts vs typical {typ_ * 100:.0f}%", delta_color="normal" if share_ >= typ_ else "inverse",
+                                   help=f"Weak spots = zones where {def_t} concede a bigger share of their xG than teams usually do there (red on the map). "
+                                        "Compare with 'typical': the share of all shots' xG from those same zones. Above typical = these chances come exactly "
+                                        f"where {def_t} are unusually vulnerable.")
+                    _few = ", all played so far" if n_a < last_n and last_n != 38 else ""
+                    _few_d = ", all played so far" if n_d < last_n and last_n != 38 else ""
+                    st.caption(f"Red = where {def_t} concede more of their xG than usual (last {n_d} matches{_few_d}; darker = more unusual).")
+                    st.caption(f"Dots = {who if who != 'Whole team' else atk_t} shots, last {n_a} matches{_few}. Bigger = higher xG. Data: understat.com.")
     st.subheader("Bookmaker priors")
     st.caption("Implied goals, clean sheets and scorer odds from The Odds API. There is no clean-sheet market, so clean-sheet odds come from the goals implied by 1X2, over/under, "
                "team totals and both-teams-to-score. Free plans have a monthly credit cap; fetches are cached for 3 hours and logged to fpl_odds_history.csv so you can back-test later.")
@@ -4739,22 +7276,84 @@ if page == "Accuracy":
                 "Even the best public models explain only roughly 15–25% of player-week variance, so R² in that range is a strong result. "
                 "AER's job is to be the best *average*; Floor/Ceiling and 5+/8+ % show the realistic spread around it.")
 
-    with st.expander(":material/bolt: Do DPS and Theta Swole add anything?"):
-        if wf_all.empty:
-            st.info("Needs about 4+ finished gameweeks.")
+    with st.expander(":material/bolt: DPS (process points): does it predict?"):
+        dv_ = globals().get("dps_val")
+        if dv_ is None or not len(dv_):
+            st.info("Needs a few finished gameweeks of model forecasts.")
         else:
-            ddb = dps_backtest(wf_all, best_alpha(wf_all), god_conv, 11, dd_mode)
-            if ddb.empty:
-                st.info("Not enough history yet.")
+            wv_ = wf_all.assign(aer=np.clip(wf_all["xPts"] + best_alpha(wf_all) * wf_all["adj"], 0, None))[["id", "GW", "aer"]] if len(wf_all) else None
+            dvm_ = dv_.merge(wv_, on=["id", "GW"], how="left") if wv_ is not None else dv_.assign(aer=np.nan)
+            tab_ = {"DPS (process points)": _fit_stats(dvm_["dps"], dvm_["actual"]), "Structural forecast": _fit_stats(dvm_["xPts"], dvm_["actual"]),
+                    "Recent form (avg points)": _fit_stats(dvm_["form"], dvm_["actual"])}
+            if dvm_["aer"].notna().sum() > 100:
+                ok_ = dvm_["aer"].notna()
+                tab_["AER (on the same weeks)"] = _fit_stats(dvm_.loc[ok_, "aer"], dvm_.loc[ok_, "actual"])
+                tab_["DPS (on the same weeks)"] = _fit_stats(dvm_.loc[ok_, "dps"], dvm_.loc[ok_, "actual"])
+            st.dataframe(pd.DataFrame(tab_).T.round(3), use_container_width=True)
+            st.caption(f"{len(dvm_):,} player-gameweeks, each predicted only from earlier gameweeks. Higher R² and rank correlation, lower miss = better. "
+                       "DPS uses no goals, assists or bonus actually scored, so it shows how much of the forecast the underlying process alone explains.")
+            rel_ = globals().get("dps_rel") or {}
+            if rel_:
+                st.caption("How repeatable each stat is from one game to the next (share of variation that is real difference between players): "
+                           + "; ".join(f"{nm_}: " + ", ".join(f"{pn_} {rel_.get((k_, e_), np.nan):.2f}" for e_, pn_ in ((2, "DEF"), (3, "MID"), (4, "FWD"))
+                                                            if (k_, e_) in rel_)
+                                       for k_, nm_ in (("xg", "xG"), ("xa", "xA"), ("dc", "DEFCON"), ("bonus", "bonus"))) + ". Low = pulled harder to the position norm.")
+    with st.expander(":material/stacked_line_chart: Zipf xVR: power law and out-of-sample check"):
+        _zi = globals().get("zipf_info") or {}
+        _zl = _zi.get("law", pd.DataFrame())
+        if not len(_zl):
+            st.info("Needs finished gameweeks with minutes data.")
+        else:
+            z1, z2, z3 = st.columns(3)
+            z1.metric("Zipf exponent s (median)", f"{_zl['Zipf exponent s'].median():.2f}",
+                      help="Slope of log(points over expectation) against log(rank) among each gameweek's top 20%. 1 = classic Zipf.")
+            z2.metric("Log-log fit R² (median)", f"{_zl['Log-log fit R²'].median():.2f}",
+                      help="How straight the log-log line is. Close to 1 = the elite tail really does follow a power law.")
+            z3.metric("Points from the top 20%", f"{_zl['Share of points scored by the top 20%'].mean() * 100:.0f}%",
+                      help="Pareto check: the share of all points (from players who played) scored by the top 20%.")
+            st.dataframe(_zl.round(3), use_container_width=True, hide_index=True)
+            zb = zipf_backtest(_zi.get("rows")) if _zi.get("rows") is not None else pd.DataFrame()
+            if len(zb):
+                st.caption("Each gameweek predicted from earlier gameweeks only. AUC 0.5 = guessing, 1.0 = perfect at picking who makes the top 20%. "
+                           "If the Zipf xVR top 20 don't outscore AER's top 20, treat it as a tie-breaker rather than a ranking.")
+                st.line_chart(zb.set_index("GW")[[c_ for c_ in ["AUC (picking the top 20%)", "AUC with Theta Swole inputs", "AUC of Theta Swole alone",
+                                                                 "AUC without BPS profile"] if c_ in zb.columns]])
+                st.line_chart(zb.set_index("GW")[[c_ for c_ in ["Top-20 pts by Zipf xVR", "Top-20 pts by converged xVR", "Top-20 pts by Theta Swole",
+                                                                 "Top-20 pts by AER"] if c_ in zb.columns]])
+                st.dataframe(zb.drop(columns="GW").mean().rename("Average").round(3).to_frame(), use_container_width=True)
             else:
-                st.caption("Average points actually scored in each gameweek by the players each rule would have picked, with ceilings from models fitted only on earlier "
-                           "gameweeks. 'XI chosen by …' is the best legal starting XI under each measure (the same rule as the DPS selected team). "
-                           "Theta Swole points = AER + the DPS signal, with β fitted only on earlier gameweeks. If its squared error isn't below AER's, "
-                           "β shrinks toward 0 and Theta Swole ranks on AER alone (adjusted for position).")
-                xi_cols_ = [c_ for c_ in ddb.columns if c_.startswith("XI chosen")]
-                st.line_chart(ddb.set_index("GW")[xi_cols_])
-                st.dataframe(ddb.drop(columns="GW").mean().rename("Average actual points").round(2).to_frame(), use_container_width=True)
-                st.line_chart(ddb.set_index("GW")[[c_ for c_ in ddb.columns if c_.startswith("Top ")]])
+                st.caption("The out-of-sample check needs a few more finished gameweeks of model forecasts.")
+            if isinstance(_zi.get("defs"), pd.DataFrame):
+                st.markdown("**What 'points over expectation' is measured against**")
+                st.dataframe(_zi["defs"].round(3), use_container_width=True)
+                st.caption("Old: each player's points over the model's own forecast for him. That rewards surprise, so the elite model learned to favour "
+                           "players the model expected little from. New (in use): points over what an ordinary player in the same position would score in "
+                           "the same minutes, Theta Swole's 'compare with the position' idea. 'Hauls among xVR top 20' = how many of the 20 players xVR "
+                           "rated highest really landed a top-20% raw-points week (same yardstick for both).")
+            st.markdown("**Theta Swole vs Zipf xVR**")
+            if "rho" in _zi or "auc_conv" in _zi:
+                s1, s2, s3, s4 = st.columns(4)
+                s1.metric("Rank agreement now (ρ)", f"{_zi.get('rho', float('nan')):.2f}",
+                          help="Spearman rank correlation between the two ratings across players with a fixture this gameweek. 1 = same order, 0 = unrelated.")
+                s2.metric("Same players in both top 20", f"{_zi.get('top20_overlap', 0)}/20")
+                s3.metric("Elite AUC: xVR → with Theta inputs", f"{_zi.get('auc_conv', float('nan')):.3f}",
+                          f"{_zi.get('auc_conv', float('nan')) - _zi.get('auc_base', float('nan')):+.3f} vs {_zi.get('auc_base', float('nan')):.3f}")
+                s4.metric("Elite AUC: Theta Swole alone", f"{_zi.get('auc_theta', float('nan')):.3f}")
+                st.caption(f"Elite model inputs in use: **{_zi.get('variant', 'standard inputs')}**. Average hit rate (AUC) on gameweeks the model "
+                           f"hadn't seen: standard {_zi.get('auc_base', float('nan')):.3f}, without BPS profile {_zi.get('auc_nobps', float('nan')):.3f}, "
+                           f"with Theta Swole's inputs {_zi.get('auc_conv', float('nan')):.3f}. The app switches set only for a gain above 0.002 that holds "
+                           "in at least half the gameweeks, and re-checks every time new results come in.")
+                if _zi.get("rho_pos"):
+                    st.caption("Rank agreement by position: " + ", ".join(f"{k_} ρ = {v_:.2f}" for k_, v_ in _zi["rho_pos"].items())
+                               + (f". Past gameweeks (out of sample): ρ = {_zi['hist_rho']:.2f} on average." if "hist_rho" in _zi else "."))
+                st.caption("They measure different things: Theta Swole ranks expected points above a replacement-level player at the same position "
+                           "(the average week); Zipf xVR ranks the chance and size of a top-20% week (the tail). The elite model was refitted with Theta's "
+                           "ingredients added (points above replacement, DPS signal, floor–ceiling spread, upside) and compared gameweek by gameweek. "
+                           + ("It improved the hit rate in most gameweeks, so the app now uses the converged model."
+                              if _zi.get("converge") else "It did not improve the hit rate reliably, so the app keeps the elite model without them."))
+            if seasons_used:
+                st.caption(f"Transfers in, tested on {seasons_used[0]}: coefficient {_zi.get('tr_coef', 0):+.3f} per standard deviation, "
+                           f"z = {_zi.get('tr_z', 0):.1f} → {'used' if _zi.get('tr_used') else 'not used'} (needs z > 2 and a positive effect).")
     with st.expander(":material/straighten: Ceiling & floor accuracy"):
         if wf_all.empty or "q90" not in wf_all.columns:
             st.info("Needs about 4+ finished gameweeks and scikit-learn.")
@@ -4883,7 +7482,14 @@ hue is on an absolute scale (about 1 point red, 4 amber, 7+ dark green) so cards
 finds the highest-scoring legal XI, orders the bench for automatic substitutions and adds the expected bench cover. It does the same for your
 head-to-head opponent and gives an approximate win chance. If your saved lineup differs, it lists who to start and bench.
 
-**DPS** = (DPS formula + FPL xP) ÷ 2, where DPS formula = ((AER + Form) × (xG + xA + creativity + threat + influence)) ÷ √Ceiling and FPL xP is
+**DPS (process points).** Expected FPL points from stats that repeat, with no goals, assists or bonus actually scored:
+appearance points + expected goals × goal points + expected assists × 3 + clean-sheet chance × clean-sheet points + DEFCON chance × 2 + saves
+(keepers) − goals-conceded deductions (defenders and keepers) + bonus rate − cards. Each per-90 rate comes from recent games (recent count most)
+and is pulled toward the position's norm in proportion to how unreliable that stat is game to game, as measured from the data (empirical Bayes),
+so stats that barely repeat are pulled hard and stable ones are trusted. The opponent comes in through the season team ratings (how leaky
+they are, how dangerous their attack is). AER − DPS shows whether a player's forecast is running ahead of (above 0) or behind his process.
+DPS is tested on past gameweeks against AER, the structural forecast and plain form (Accuracy page). Penalty duty is not yet split out
+(it needs penalty-by-penalty history). The old definition was: (DPS formula + FPL xP) ÷ 2, where DPS formula = ((AER + Form) × (xG + xA + creativity + threat + influence)) ÷ √Ceiling and FPL xP is
 FPL's own expected points (published only for the current and next gameweek; elsewhere DPS is the formula alone). FPL's historical expected points
 are not published, so the FPL xP half cannot be back-tested; the DPS back-test in the Accuracy tab covers the formula part.
 
@@ -4898,6 +7504,88 @@ points pushed players projected near zero to the top.
 • *Risk appetite* (default 0) lets you favour boom-or-bust players when you're the underdog, or steady ones when you're protecting a lead.
 • *Upgrade vs my XI* = a player's points minus your weakest starter at his position: the number that matters for a waiver claim.
 θ uses the full 'Gameweeks to sum' horizon for AER.
+
+**Zipf xVR (Zipf Expected-Value Rating).** FPL points are heavy-tailed: a small share of performances produce most of the points.
+For every finished gameweek: (1) take everyone who played (N players); (2) rank them by points over expectation, where expectation = what an ordinary player in the same position
+would score in the same minutes (Theta Swole's position-relative idea; measuring it against each player's own forecast was tried first and
+rewarded surprise rather than quality); (3) split off the top 20% (Pareto's vital few); (4) give each of them credit = points ÷ rank^s × (1 + fraction of 90
+minutes played), where s is the Zipf exponent fitted on that gameweek's top 20% (slope of log surplus on log rank), so the rank weighting
+follows the law the data actually shows rather than an assumed one; the other 80% get no credit. A logistic model, fitted only on earlier
+gameweeks, turns xG, xA, threat, creativity, BPS, minutes, starts, form, DEFCON rate, position, the model's forecast and the player's decayed
+past elite rate into his chance of making the next top 20% (Elite %). Zipf xVR = Elite % × his typical elite credit (shrunk toward his
+position's average) × a constant that converts credit back to points. FPL's live transfers in (refreshing until the deadline) are added only
+when a past season shows they predict the top 20% beyond everything else (z > 2). The Accuracy page shows the fitted exponent, how straight the
+log-log line is, the share of points scored by the top 20%, and a walk-forward test of whether xVR picks the top 20%.
+
+**BPS profile and the bonus race.** BPS per 90 minutes from games of 30+ minutes (recent games count most) gives each player an
+average, a floor (10th percentile) and a ceiling (90th percentile), each pulled toward his position's norm by three pseudo-games, then ranked
+only against his own position. Every fixture's bonus race is simulated 4,000 times: each player starts, comes on or sits out with his
+playing-time probabilities, scores a BPS drawn from his own floor–average–ceiling profile (scaled by how good the fixture is for him), and the
+top three in the match get 3, 2 and 1 bonus points. That gives xBonus, P(3 bonus) and P(any bonus).
+
+**Zipf xVR with BPS.** Zipf xVR = Elite % × Elite size. Elite % is the chance of making the next gameweek's top 20% (points over
+expectation), from a logistic model that now includes the within-position BPS average, floor, ceiling and volatility. Elite size is how big
+his top-20% week tends to be (Zipf credit = points ÷ rank^s × (1 + minutes fraction)), predicted by a ridge regression on the same signals and
+blended with his own past elite weeks. Both models use only earlier gameweeks. The Accuracy page compares the elite model's AUC with and
+without the BPS profile, so you can see whether BPS earns its place.
+
+**Theta Swole and Zipf xVR together.** The two answer different questions: Theta Swole = expected points above a replacement-level player
+at the same position (the average week); Zipf xVR = chance × size of a top-20% week (the tail). The app measures how alike they are (rank
+correlation and top-20 overlap, now and in past gameweeks) and tests a converged elite model that adds Theta's ingredients (points above
+replacement, the DPS signal, floor–ceiling spread and upside) to the Zipf inputs. Each gameweek it is fitted on earlier gameweeks only and
+compared with the plain elite model, and with the elite model minus the BPS profile. The app uses whichever set of inputs raises the hit
+rate (AUC) by more than 0.002 on average and in at least half the gameweeks; otherwise it keeps the standard set. It re-checks as new results
+arrive, so BPS and Theta's ingredients are used only while they earn their place. Theta Swole itself is unchanged, so the two remain separate rankings.
+
+**Haul points and Green score.** Haul points = chance of a top-20% week × the points he scores in a typical haul week (his own haul
+weeks, pulled toward his position's typical haul by three pseudo-weeks). It is in real FPL points: the slice of his expected points that
+comes from big weeks. The Zipf-weighted xVR index is kept on the Accuracy page as the research behind the haul chance. Green score (0–100)
+rates strength across seven areas, each counted once so AER isn't counted several times over: expected points (AER), upside (ceiling and
+haul chance), minutes (expected minutes), attack (xG, xA), defence (clean-sheet chance, DEFCON; not scored for forwards), bonus (expected
+bonus) and value to your team (WPA, or Pts added). Each area adds how far he is into the green half of the players shown; the average is
+faded by confidence. Green areas = how many areas he is in the top quarter for.
+
+**Match predictions** (More → Matchups). For each fixture: expected goals for both sides from season-long Poisson team ratings, where
+every team's attack and defence are rated together from all of this season's matches, adjusting for opponent strength (goals blended with
+expected goals, older matches fading at a rate chosen by past accuracy, mild shrinkage toward average), blended with bookmaker-implied goals
+when odds have been fetched. The predicted score is the likeliest scoreline within the likeliest result; the likeliest exact scores are
+listed beside it. Goals are modelled as Poisson with the
+Dixon & Coles correction for low scores, giving win/draw/loss chances, the likeliest scores, clean-sheet chances, both-teams-to-score and
+over 2.5 goals. Every finished match is re-predicted from earlier games only, and the page reports how often the likeliest result happened
+against a no-information guess. The matchup section lists the gameweek's best attacking matchups and, for one fixture, what each side
+concedes to defenders, midfielders and forwards as "+30%"-style comparisons with an average team.
+
+**Team news in match predictions.** Each fixture's predicted goals are adjusted for who's missing: each player's share of his team's recent
+expected goal involvements (attack) and, for defenders and keepers, of the team's defensive minutes. By default the missing list is FPL's
+injury and suspension flags (doubtful players count partly); in the Fixture deep-dive you can add or remove players per team. How strongly
+absences move the score is measured on this season's finished matches, treating regulars who played 0 minutes as missing, and re-checked as
+results come in; if absences don't measurably help, no adjustment is applied.
+
+**Points calculator** (More → Points calculator). Pick a player and a gameweek in the display, then tap metrics like calculator keys. It
+fits the weights and constant for exactly those metrics (on gameweeks before the one shown, optionally only his position group), writes out
+the equation with his values filled in, and shows the predicted points with the out-of-sample R² in brackets. For a past gameweek it also
+shows what he actually scored. C clears; Best loads the Signal finder's best combination.
+
+**Signal finder** (More → Signal finder). Searches every statistic the model computes before a gameweek for the strongest link to the points
+actually scored: each statistic alone (as a straight line and as a shape, in tenths), the best 20 in every pair (straight line with an
+interaction term, and a 4 × 4 grid), and the best small combination built one statistic at a time (forward selection, added only if it raises
+the out-of-sample R² by more than 0.002). Every gameweek is predicted from earlier gameweeks only, and the most recent gameweeks are held back
+entirely to confirm the winners, which guards against finding patterns in noise after trying thousands of combinations. The best pair is
+shown as a grid of average points by range of each statistic, and the best combination as a formula.
+
+**Match analyzer** (More → Match analyzer). Pick a gameweek and fixture. For a finished match: the model's pre-match prediction (built only
+from earlier matches) against the final score and how likely that result was; Understat's shots as an expected-goals race chart and shot maps;
+a "deserved result" from replaying every chance 20,000 times; every player's FPL points broken down and set against his pre-match forecast,
+the bonus race, regulars who didn't play, and which of your and your opponent's players featured. Unplayed matches show the prediction.
+
+**Shot maps** (More → Matchups). Pick a fixture and which side is attacking: red squares show where the defending team has conceded shots
+(xG per match, by zone), dots show where the attacking team, or one chosen player, has shot from (size = xG, colour = outcome). "His xG from
+their weakest zones" = the share of his chances that came from the third of zones where that opponent concedes most. Data comes free from
+understat.com (shots only; FPL has no location data) and is cached, so it's quick after the first look.
+
+**Pick Team** works like the FPL app: tap a player, then tap a highlighted player to switch them (only legal formations are offered; two
+substitutes can swap bench order). "Rate players by" changes the card numbers and re-picks the XI by that rating; projected points always
+count expected points. Transfers below lists the best available replacements for any squad player.
 
 **⚡ DPS selected team** (top of the Rankings tab) replaces the old shortlist: the legal XI (1 GK, 3–5 DEF, 2–5 MID, 1–3 FWD) with the highest total DPS
 from the players the filters show, plus a bench that keeps a legal 2/5/5/3 squad. Its projected points count expected points (AER) plus bench cover.
@@ -5089,7 +7777,7 @@ def ai_live_context():
         parts.append("User's win chance by gameweek (before any pickup): " + ", ".join(f"GW{g} {p * 100:.0f}%" for g, p in wi["pwin"].items()))
     v = G.get("view")
     if isinstance(v, pd.DataFrame) and len(v):
-        keep = [c for c in ["Rank", "Player", "Pos", "Team", "Opp", "WPA %", "Pts added", "Drop", "Theta Swole", "Upgrade vs my XI", "DPS",
+        keep = [c for c in ["Rank", "Player", "Pos", "Team", "Opp", "WPA %", "Pts added", "Drop", "Haul pts", "Elite %", "Haul size", "BPS avg", "BPS floor", "BPS ceil", "xBonus", "P(3 bonus) %", "Theta Swole", "Upgrade vs my XI", "DPS",
                             "FPL xP", "AER", "Confidence %", "Floor", "Ceiling", "Mins", "Form", "xG", "xA", "CS %", "Status", "Chance %", "News"]
                 if c in v.columns]
         parts.append(f"RANKINGS TABLE as currently filtered (top 40 of {len(v)}):\n" + _df_text(v[keep], 40))
@@ -5340,7 +8028,7 @@ AI_SETTABLE = {
     "use_learning": ("use_learning", "bool", None, None, None, "learned correction on/off"),
     "god_on": ("god_on", "bool", None, None, None, "Solve FPL on/off"),
     "god_conv": ("god_conv", "float", 0.0, 2.0, 0.1, "Solve FPL conviction"),
-    "rank_by": ("rank_by", "choice", None, None, ["WPA", "Theta Swole", "AER", "DPS"], "ranking order"),
+    "rank_by": ("rank_by", "choice", None, None, ["WPA", "Green score", "Haul points", "Theta Swole", "AER", "DPS"], "ranking order"),
 }
 ACTION_RE = re.compile(r"<<ACTIONS>>(.*?)(?:<<END>>|$)", re.S)
 
