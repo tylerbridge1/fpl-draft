@@ -1,33 +1,22 @@
-# FPL Hog Statistician — two themes the user can switch between in the app's Settings menu
-# (top-right ⋮ → Settings → Theme). Light follows VS Code "Quiet Light", dark follows "Monokai".
+# FPL Hog Statistician — FPL-style colours in both light and dark mode
+# (users can switch in the app's ⋮ menu → Settings → Theme)
 [theme]
 font = "sans serif"
 
 [theme.light]
-primaryColor = "#7A3E9D"
-backgroundColor = "#F5F5F5"
-secondaryBackgroundColor = "#E8E8EE"
-textColor = "#333333"
-linkColor = "#4B83CD"
-borderColor = "#D4D4D4"
-
-[theme.light.sidebar]
-backgroundColor = "#EDEDF5"
-secondaryBackgroundColor = "#E2E2EC"
-textColor = "#333333"
+primaryColor = "#963CFF"
+backgroundColor = "#FFFFFF"
+secondaryBackgroundColor = "#F3F0F7"
+textColor = "#1F1A2E"
 
 [theme.dark]
-primaryColor = "#A6E22E"
-backgroundColor = "#272822"
-secondaryBackgroundColor = "#3E3D32"
-textColor = "#F8F8F2"
-linkColor = "#66D9EF"
-borderColor = "#49483E"
-
-[theme.dark.sidebar]
-backgroundColor = "#1E1F1C"
-secondaryBackgroundColor = "#3E3D32"
-textColor = "#F8F8F2"
+primaryColor = "#00FF87"
+backgroundColor = "#11131A"
+secondaryBackgroundColor = "#1D2030"
+textColor = "#EDEAF4"
 
 [client]
 toolbarMode = "minimal"
+
+[global]
+disableWidgetStateDuplicationWarning = true
